@@ -22,7 +22,7 @@ function AuthFloatingPaths({ position, delay = 0 }: { position: number; delay?: 
     id: i,
     d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position} -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
     width: 0.5 + i * 0.04,
-    strokeOpacity: 0.2 + i * 0.006,
+    strokeOpacity: 0.15 + (i / 23) * 0.15,
   }));
   return (
     <motion.div
@@ -327,7 +327,7 @@ export default function Auth() {
       <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           {/* Smoked glass card — paths visible through the blur */}
-          <div className="relative rounded-xl bg-neutral-900/60 backdrop-blur-xl shadow-[0_0_0_1px_rgba(255,255,255,0.08),inset_0_1px_0_rgba(255,255,255,0.05),0_8px_40px_-12px_rgba(0,0,0,0.7)]">
+          <div className="relative rounded-xl bg-neutral-900/60 backdrop-blur-xl shadow-[0_0_0_1px_rgba(255,255,255,0.06),inset_0_1px_0_rgba(255,255,255,0.05),0_8px_40px_-12px_rgba(0,0,0,0.7)]">
             {/* Specular top-edge highlight */}
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.1] to-transparent rounded-t-xl" />
 
