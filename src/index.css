@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Obsidian & Bronze - Deep, rich, premium palette */
+    --background: 0 0% 100%;
+    --foreground: 30 8% 8%; /* Deep charcoal with warm undertone */
+
+    --card: 30 10% 98%;
+    --card-foreground: 30 8% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 8% 8%;
+
+    /* Obsidian primary */
+    --primary: 30 8% 8%;
+    --primary-foreground: 30 10% 98%;
+
+    --secondary: 30 6% 94%;
+    --secondary-foreground: 30 8% 8%;
+
+    --muted: 30 6% 94%;
+    --muted-foreground: 30 6% 42%;
+
+    --accent: 30 6% 94%;
+    --accent-foreground: 30 8% 8%;
+
+    /* Bronze accent colors */
+    --accent-bronze: 25 65% 48%;
+    --accent-bronze-foreground: 30 10% 98%;
+    --accent-warm: 30 35% 55%;
+    --glow-bronze: 25 75% 60%;
+
+    /* Status colors - non-blue */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 98%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Borders & inputs with warm tint */
+    --border: 30 8% 88%;
+    --input: 30 8% 88%;
+    --ring: 25 65% 48%; /* Bronze focus ring */
+
+    --radius: 0.5rem;
+
+    /* Warm shadows with bronze undertones */
+    --shadow-sm: 0 1px 3px 0 rgba(40, 32, 28, 0.08);
+    --shadow: 0 2px 12px 0 rgba(40, 32, 28, 0.12);
+    --shadow-md: 0 4px 20px 0 rgba(40, 32, 28, 0.15);
+    --shadow-lg: 0 8px 32px 0 rgba(40, 32, 28, 0.18);
+    --shadow-glow: 0 0 24px 0 rgba(176, 106, 62, 0.25); /* Bronze glow */
+    
+    /* Glass-morphism effects */
+    --glass-bg: 30 10% 98% / 0.7;
+    --glass-border: 30 8% 88% / 0.3;
+    
+    /* Surface elevation */
+    --surface-elevated: 30 15% 99%;
+    
+    /* Text hierarchy with warmth */
+    --text-primary: 30 8% 8%;
+    --text-secondary: 30 6% 42%;
+    --text-tertiary: 30 6% 56%;
+
+    --sidebar-background: 30 10% 98%;
+    --sidebar-foreground: 30 6% 28%;
+    --sidebar-primary: 30 8% 8%;
+    --sidebar-primary-foreground: 30 10% 98%;
+    --sidebar-accent: 30 6% 94%;
+    --sidebar-accent-foreground: 30 8% 8%;
+    --sidebar-border: 30 8% 88%;
+    --sidebar-ring: 25 65% 48%;
+  }
+
+  .dark {
+    /* Keep light mode only - mirror obsidian & bronze palette */
+    --background: 0 0% 100%;
+    --foreground: 30 8% 8%;
+    --card: 30 10% 98%;
+    --card-foreground: 30 8% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 8% 8%;
+    --primary: 30 8% 8%;
+    --primary-foreground: 30 10% 98%;
+    --secondary: 30 6% 94%;
+    --secondary-foreground: 30 8% 8%;
+    --muted: 30 6% 94%;
+    --muted-foreground: 30 6% 42%;
+    --accent: 30 6% 94%;
+    --accent-foreground: 30 8% 8%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 30 8% 88%;
+    --input: 30 8% 88%;
+    --ring: 25 65% 48%;
+    --sidebar-background: 30 10% 98%;
+    --sidebar-foreground: 30 6% 28%;
+    --sidebar-primary: 30 8% 8%;
+    --sidebar-primary-foreground: 30 10% 98%;
+    --sidebar-accent: 30 6% 94%;
+    --sidebar-accent-foreground: 30 8% 8%;
+    --sidebar-border: 30 8% 88%;
+    --sidebar-ring: 25 65% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  @media (min-width: 640px) {
+    body {
+      font-size: 16px;
+    }
+  }
+
+  /* Touch-friendly spacing and targets */
+  @media (max-width: 767px) {
+    input, textarea, select, button {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+  }
+
+  /* Highlight styles - zero layout shift */
+  .hl {
+    display: inline;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    line-height: inherit;
+    letter-spacing: inherit;
+    word-spacing: inherit;
+    vertical-align: baseline;
+    white-space: pre-wrap;
+    background: none;
+    mix-blend-mode: normal;
+    border-radius: 0;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+}
