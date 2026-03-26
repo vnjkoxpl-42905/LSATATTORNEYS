@@ -9,7 +9,6 @@ import { BackgroundPaths } from '@/components/ui/background-paths';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { BorderBeam } from '@/components/ui/border-beam';
-import WelcomeLoading from '@/components/WelcomeLoading';
 import { AnimatedButton } from '@/components/ui/animated-button';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -109,13 +108,9 @@ export default function Auth() {
   const [loading, setLoading] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
 
-  // ── Welcome transition state ──
-  // skipAutoRedirectRef is set synchronously in handleSubmit BEFORE React's
-  // state update cycle so the existing user-watcher useEffect never fires
-  // navigate('/') while the welcome overlay is playing.
+  // ── skipAutoRedirectRef: set synchronously in handleSubmit so the user-watcher
+  // useEffect never fires navigate('/foyer') while we're in the post-login async block.
   const skipAutoRedirectRef = React.useRef(false);
-  const [showWelcome, setShowWelcome] = React.useState(false);
-  const [welcomeName, setWelcomeName] = React.useState('');
 
   // ── Recovery state ──
   const [resetEmail, setResetEmail] = React.useState('');
@@ -156,7 +151,7 @@ export default function Auth() {
     const url = new URL(window.location.href);
     const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
     const type = url.searchParams.get('type') || hashParams.get('type');
-    if (user && !isRecovery && type !== 'recovery' && !skipAutoRedirectRef.current) navigate('/');
+    if (user && !isRecovery && type !== 'recovery' && !skipAutoRedirectRef.current) navigate('/foyer');
   }, [user, navigate, isRecovery]);
 
   // Detect recovery mode
@@ -234,9 +229,9 @@ export default function Auth() {
         if (error) {
           toast({ title: 'Authentication failed', description: error.message, variant: 'destructive' });
         } else {
-          // ── Welcome transition: grab the freshest user metadata for the name ──
-          // Set the ref SYNCHRONOUSLY before any async work so the redirect
-          // useEffect can't fire navigate('/') while we're showing the overlay.
+          // ── Navigate to Foyer with Welcome state ──
+          // skipAutoRedirectRef must be set SYNCHRONOUSLY so the auto-redirect
+          // useEffect above can't fire navigate('/foyer') while we're mid-async.
           skipAutoRedirectRef.current = true;
 
           const { data: { user: freshUser } } = await supabase.auth.getUser();
@@ -245,10 +240,7 @@ export default function Auth() {
             freshUser?.user_metadata?.display_name ||
             email.split('@')[0];
 
-          setWelcomeName(name);
-          setShowWelcome(true);
-          setModalOpen(false);
-          // Navigation happens inside WelcomeLoading's onComplete callback
+          navigate('/foyer', { state: { showWelcome: true, welcomeName: name } });
           return;
         }
       }
@@ -714,13 +706,7 @@ export default function Auth() {
         )}
       </AnimatePresence>
 
-      {/* ── z-9999: Welcome overlay — mounts after successful sign-in ── */}
-      {showWelcome && (
-        <WelcomeLoading
-          userName={welcomeName}
-          onComplete={() => navigate('/')}
-        />
-      )}
+      {/* WelcomeLoading now lives in AcademyFoyer.tsx, mounted over the ghost hub */}
 
       {/* ── Forgot password sub-modal ── */}
       <AnimatePresence>

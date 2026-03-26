@@ -7,6 +7,7 @@ import { QuestionBankProvider } from "./contexts/QuestionBankContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { UserSettingsProvider } from "./contexts/UserSettingsContext";
 import Home from "./pages/Home";
+import AcademyFoyer from "./pages/AcademyFoyer";
 import Drill from "./pages/Drill";
 import WrongAnswerJournal from "./pages/WrongAnswerJournal";
 import FlaggedQuestions from "./pages/FlaggedQuestions";
@@ -25,7 +26,10 @@ const App = () => (
           <Routes>
             {/* Auth route - NO question bank needed */}
             <Route path="/auth" element={<Auth />} />
-            
+
+            {/* Foyer — arrival layer, no question bank needed */}
+            <Route path="/foyer" element={<AcademyFoyer />} />
+
             {/* All other routes - wrapped with QuestionBankProvider */}
             <Route path="/*" element={
               <QuestionBankProvider>
