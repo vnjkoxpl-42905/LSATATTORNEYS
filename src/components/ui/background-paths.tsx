@@ -1,4 +1,5 @@
 "use client";
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
@@ -133,12 +134,13 @@ export function BackgroundPathsHero({
 /**
  * Standalone background paths overlay (no layout, no title).
  * Used by Home.tsx hero card as a background layer inside existing containers.
+ * memo'd so parent re-renders (e.g. from Auth form state) don't re-render 72 SVG paths.
  */
-export function BackgroundPaths() {
+export const BackgroundPaths = memo(function BackgroundPaths() {
     return (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <FloatingPaths position={1} />
             <FloatingPaths position={-1} />
         </div>
     );
-}
+});

@@ -16,7 +16,6 @@ import { RecentPerformanceWidget } from '@/components/dashboard/RecentPerformanc
 import { SectionSelector } from '@/components/drill/SectionSelector';
 import { QuestionPicker } from '@/components/drill/QuestionPicker';
 import { NaturalDrillCreator } from '@/components/drill/NaturalDrillCreator';
-import { LoginIntro } from '@/components/LoginIntro';
 import { SplineScene } from '@/components/ui/splite';
 import { Card } from '@/components/ui/card';
 import { Spotlight } from '@/components/ui/spotlight';
@@ -31,8 +30,6 @@ export default function Home() {
   const { user, loading: authLoading } = useAuth();
   const { manifest, isLoading, error } = useQuestionBank();
   const [selectedAction, setSelectedAction] = React.useState<DrillMode | null>(null);
-  const [showIntro, setShowIntro] = React.useState(false);
-  const [introComplete, setIntroComplete] = React.useState(false);
   const [stats, setStats] = React.useState({
     totalAttempted: 0,
     avgAccuracy: 0,
@@ -51,21 +48,6 @@ export default function Home() {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
-
-  // Show intro once per session
-  React.useEffect(() => {
-    if (!authLoading && user) {
-      const introKey = `login_intro_shown_${user.id}`;
-      const hasShownIntro = sessionStorage.getItem(introKey);
-      
-      if (!hasShownIntro) {
-        setShowIntro(true);
-        sessionStorage.setItem(introKey, Date.now().toString());
-      } else {
-        setIntroComplete(true);
-      }
-    }
-  }, [user, authLoading]);
 
   // Load user stats
   React.useEffect(() => {
@@ -113,11 +95,6 @@ export default function Home() {
     loadStats();
   }, [user]);
 
-  const handleIntroComplete = () => {
-    setShowIntro(false);
-    setIntroComplete(true);
-  };
-
   const getFirstName = () => {
     if (!user) return 'there';
     const displayName = user.user_metadata?.display_name || 
@@ -142,10 +119,10 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-          <p className="text-sm text-text-secondary">Preparing your workspace...</p>
+          <div className="w-12 h-12 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+          <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-500">Preparing your workspace</p>
         </div>
       </div>
     );
@@ -153,8 +130,8 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-destructive">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950">
+        <p className="text-sm text-neutral-400">{error}</p>
       </div>
     );
   }
@@ -163,19 +140,7 @@ export default function Home() {
 
   return (
     <>
-      {showIntro && (
-        <LoginIntro 
-          firstName={getFirstName()} 
-          onComplete={handleIntroComplete} 
-        />
-      )}
-      
-      <div 
-        className={cn(
-          "min-h-screen flex transition-opacity duration-300",
-          !introComplete && "opacity-0"
-        )}
-      >
+      <div className="min-h-screen flex bg-neutral-950">
         {/* Sidebar */}
         <aside className="w-64 border-r border-white/[0.06] bg-neutral-950 flex flex-col">
           <div className="p-6 border-b border-white/[0.06]">
