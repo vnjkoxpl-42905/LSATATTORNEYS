@@ -72,11 +72,11 @@ export const FOYER_NODES: FoyerNode[] = [
     charge: 0.38,
   },
   {
-    id: "notes",
-    label: "NOTES",
+    id: "classroom",
+    label: "CLASSROOM",
     angleDeg: 198,              // upper-left
-    target: "/waj",
-    description: "Wrong answers, flags & homework",
+    target: "/classroom",
+    description: "Assigned work, materials & submissions",
     charge: 0.82,
   },
 ];

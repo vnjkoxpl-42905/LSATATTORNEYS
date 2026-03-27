@@ -526,6 +526,16 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* ── Bottom-left hub return — fixed, high-contrast secondary destination */}
+      <div className="fixed bottom-7 left-8 z-20">
+        <Button
+          onClick={() => navigate('/foyer')}
+          className="bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-200 shadow-md px-10 h-20 text-[18px] font-medium rounded-xl"
+        >
+          Return to Main Hub
+        </Button>
+      </div>
+
     </div>
   );
 }

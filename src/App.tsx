@@ -14,6 +14,7 @@ import FlaggedQuestions from "./pages/FlaggedQuestions";
 import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
+import Classroom from "./pages/Classroom";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -40,6 +41,7 @@ const App = () => (
                   <Route path="/flagged" element={<FlaggedQuestions />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/classroom" element={<Classroom />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </QuestionBankProvider>
