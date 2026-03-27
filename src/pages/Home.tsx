@@ -240,6 +240,14 @@ export default function Home() {
               variant="ghost"
               size="sm"
               className="text-neutral-400 hover:text-white hover:bg-white/[0.06]"
+              onClick={() => navigate('/foyer')}
+            >
+              Main Hub
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-neutral-400 hover:text-white hover:bg-white/[0.06]"
               onClick={() => navigate('/analytics')}
             >
               View Analytics
