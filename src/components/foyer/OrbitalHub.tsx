@@ -13,6 +13,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -42,7 +43,7 @@ export const FOYER_NODES: FoyerNode[] = [
   {
     id: "practice",
     label: "PRACTICE",
-    angleDeg: -90,              // top / 12 o'clock
+    angleDeg: -90,
     target: "/",
     description: "Drills, sections & adaptive sets",
     charge: 0,
@@ -50,7 +51,7 @@ export const FOYER_NODES: FoyerNode[] = [
   {
     id: "schedule",
     label: "SCHEDULE",
-    angleDeg: -18,              // upper-right
+    angleDeg: -18,
     target: "/schedule",
     description: "Today's plan & milestones",
     charge: 0.6,
@@ -58,7 +59,7 @@ export const FOYER_NODES: FoyerNode[] = [
   {
     id: "analytics",
     label: "ANALYTICS",
-    angleDeg: 54,               // lower-right
+    angleDeg: 54,
     target: "/analytics",
     description: "Accuracy, trends & performance insight",
     charge: 0,
@@ -66,7 +67,7 @@ export const FOYER_NODES: FoyerNode[] = [
   {
     id: "booking",
     label: "BOOKING",
-    angleDeg: 126,              // lower-left
+    angleDeg: 126,
     target: "/booking",
     description: "Sessions & office hours",
     charge: 0.38,
@@ -74,7 +75,7 @@ export const FOYER_NODES: FoyerNode[] = [
   {
     id: "classroom",
     label: "CLASSROOM",
-    angleDeg: 198,              // upper-left
+    angleDeg: 198,
     target: "/classroom",
     description: "Assigned work, materials & submissions",
     charge: 0.82,
@@ -129,6 +130,20 @@ interface OrbitalHubProps {
 
 export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: OrbitalHubProps) {
   const [hovered, setHovered] = useState<string | null>(null);
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
+  // Theme-adaptive SVG colors
+  const nodeStroke  = isLight ? 'black'                      : 'white';
+  const nodeC       = isLight ? '0,0,0'                      : '255,255,255';
+  const dotBg       = isLight ? '#000'                       : '#fff';
+
+  // Hover ring border class
+  const hoverRingStyle: React.CSSProperties = {
+    inset: "-9px",
+    borderRadius: "9999px",
+    border: `1px solid rgba(${nodeC},0.22)`,
+  };
 
   const isGhost      = phase === "ghost";
   const isMat        = phase === "materializing";
@@ -138,7 +153,6 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
 
   const hoveredNode  = hovered ? FOYER_NODES.find(n => n.id === hovered) : null;
 
-  // Ring dashoffset: full (hidden) in ghost phase, 0 (fully drawn) in all others
   const dashOffset = isGhost ? CIRCUMFERENCE : 0;
 
   return (
@@ -153,7 +167,6 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
 
       {/* ════════════════════════════════════════
           SVG RING LAYER
-          Handles: track, leading arc, decorative rings, charge halos
           ════════════════════════════════════════ */}
       <svg
         viewBox="0 0 400 400"
@@ -166,7 +179,7 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
         <circle
           cx={CX} cy={CY} r={176}
           fill="none"
-          stroke="white"
+          stroke={nodeStroke}
           strokeOpacity={isGhost ? 0.04 : 0.055}
           strokeWidth={0.5}
           strokeDasharray="2 10"
@@ -180,11 +193,11 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
             animation: isActive ? "orbital-drift 120s linear infinite" : "none",
           }}
         >
-          {/* Full orbital ring — animates in via dashoffset */}
+          {/* Full orbital ring */}
           <circle
             cx={CX} cy={CY} r={RADIUS}
             fill="none"
-            stroke="white"
+            stroke={nodeStroke}
             strokeOpacity={isGhost ? 0.07 : 0.14}
             strokeWidth={0.75}
             strokeDasharray={CIRCUMFERENCE}
@@ -194,11 +207,11 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
                 "stroke-dashoffset 2.2s cubic-bezier(0.25,0.46,0.45,0.94), stroke-opacity 1.5s ease",
             }}
           />
-          {/* Brighter leading arc — upper-right quarter, gives directional sense */}
+          {/* Brighter leading arc */}
           <path
             d={`M ${CX} ${CY - RADIUS} A ${RADIUS} ${RADIUS} 0 0 1 ${CX + RADIUS} ${CY}`}
             fill="none"
-            stroke="white"
+            stroke={nodeStroke}
             strokeOpacity={isGhost ? 0 : 0.26}
             strokeWidth={1}
             strokeLinecap="round"
@@ -210,13 +223,13 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
         <circle
           cx={CX} cy={CY} r={44}
           fill="none"
-          stroke="white"
+          stroke={nodeStroke}
           strokeOpacity={isGhost ? 0.03 : 0.07}
           strokeWidth={0.5}
           style={{ transition: "stroke-opacity 2s ease" }}
         />
 
-        {/* ── Charge halos (behind HTML node overlays) ── */}
+        {/* ── Charge halos ── */}
         {FOYER_NODES.map(node => {
           if (!node.charge) return null;
           const p = svgPos(node.angleDeg);
@@ -225,7 +238,7 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
               key={`halo-${node.id}`}
               cx={p.x} cy={p.y}
               r={9 + node.charge * 8}
-              fill="white"
+              fill={nodeStroke}
               fillOpacity={isGhost ? 0 : node.charge * 0.055}
               style={{ transition: "fill-opacity 2.5s ease 0.5s" }}
             />
@@ -235,7 +248,6 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
 
       {/* ════════════════════════════════════════
           HTML NODE OVERLAYS
-          Handles: interactive dots, labels, hover states, dissolve logic
           ════════════════════════════════════════ */}
       {FOYER_NODES.map((node, i) => {
         const { xp, yp }  = pct(node.angleDeg);
@@ -253,7 +265,6 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
               left: `${xp}%`,
               top:  `${yp}%`,
               transform: "translate(-50%, -50%)",
-              // Generous hit target
               padding: "18px",
             }}
             initial={{ opacity: 0 }}
@@ -261,7 +272,7 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
               opacity: isGhost ? 0 : isReceding ? 0 : 1,
               scale:   isSelected ? 1.25 : 1,
               filter:  isSelected
-                ? "brightness(2.2) drop-shadow(0 0 8px rgba(255,255,255,0.7))"
+                ? `brightness(2.2) drop-shadow(0 0 8px rgba(${nodeC},0.7))`
                 : isReceding
                 ? "brightness(0.25)"
                 : "brightness(1)",
@@ -280,8 +291,7 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
 
               {/* Hover ring */}
               <motion.div
-                className="absolute rounded-full border border-white/[0.22]"
-                style={{ inset: "-9px" }}
+                style={{ position: "absolute", ...hoverRingStyle }}
                 initial={{ opacity: 0, scale: 0.6 }}
                 animate={{ opacity: isHov ? 1 : 0, scale: isHov ? 1 : 0.6 }}
                 transition={{ duration: 0.22 }}
@@ -291,12 +301,12 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
               <div
                 className="w-full h-full rounded-full"
                 style={{
-                  background: "white",
+                  background: dotBg,
                   opacity:    isHov ? 1 : 0.4 + node.charge * 0.45,
                   boxShadow:  isHov
-                    ? "0 0 12px rgba(255,255,255,0.8)"
+                    ? `0 0 12px rgba(${nodeC},0.8)`
                     : node.charge > 0.4
-                    ? `0 0 ${node.charge * 7}px rgba(255,255,255,${0.3 + node.charge * 0.35})`
+                    ? `0 0 ${node.charge * 7}px rgba(${nodeC},${0.3 + node.charge * 0.35})`
                     : "none",
                   transition: "opacity 0.3s, box-shadow 0.3s",
                 }}
@@ -309,24 +319,24 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
                   style={{
                     letterSpacing: "0.22em",
                     color: isHov
-                      ? "rgba(255,255,255,0.88)"
+                      ? `rgba(${nodeC},0.88)`
                       : node.charge > 0.5
-                      ? `rgba(255,255,255,${0.28 + node.charge * 0.22})`
-                      : "rgba(255,255,255,0.22)",
+                      ? `rgba(${nodeC},${0.28 + node.charge * 0.22})`
+                      : `rgba(${nodeC},0.22)`,
                     transition: "color 0.3s",
                   }}
                 >
                   {node.label}
                 </div>
 
-                {/* Charge bar — replaces the notification badge */}
+                {/* Charge bar */}
                 {node.charge > 0 && (
                   <div
                     className="mt-[3px] h-px rounded-full"
                     style={{
                       width: `${node.charge * 100}%`,
-                      background: `rgba(255,255,255,${0.12 + node.charge * 0.28})`,
-                      boxShadow:  `0 0 ${node.charge * 5}px rgba(255,255,255,${node.charge * 0.4})`,
+                      background: `rgba(${nodeC},${0.12 + node.charge * 0.28})`,
+                      boxShadow:  `0 0 ${node.charge * 5}px rgba(${nodeC},${node.charge * 0.4})`,
                       transition: "width 1s ease, opacity 0.5s",
                     }}
                   />
@@ -338,8 +348,7 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
       })}
 
       {/* ════════════════════════════════════════
-          READING POCKET
-          Center contextual display — updates on hover, fades between states
+          READING POCKET — center hover display
           ════════════════════════════════════════ */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -355,13 +364,13 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
               <>
                 <div
                   className="uppercase font-medium mb-1.5"
-                  style={{ fontSize: 8, letterSpacing: "0.28em", color: "rgba(255,255,255,0.55)" }}
+                  style={{ fontSize: 8, letterSpacing: "0.28em", color: `rgba(${nodeC},0.55)` }}
                 >
                   {hoveredNode.label}
                 </div>
                 <div
                   className="leading-relaxed"
-                  style={{ fontSize: 9, color: "rgba(255,255,255,0.27)" }}
+                  style={{ fontSize: 9, color: `rgba(${nodeC},0.27)` }}
                 >
                   {hoveredNode.description}
                 </div>
@@ -371,7 +380,7 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
                     style={{
                       fontSize: 7,
                       letterSpacing: "0.25em",
-                      color: `rgba(255,255,255,${0.18 + hoveredNode.charge * 0.3})`,
+                      color: `rgba(${nodeC},${0.18 + hoveredNode.charge * 0.3})`,
                     }}
                   >
                     {hoveredNode.charge > 0.65 ? "New activity" : "Updated"}
@@ -381,7 +390,7 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
             ) : (
               <div
                 className="uppercase"
-                style={{ fontSize: 8, letterSpacing: "0.42em", color: "rgba(255,255,255,0.09)" }}
+                style={{ fontSize: 8, letterSpacing: "0.42em", color: `rgba(${nodeC},0.09)` }}
               >
                 LSAT U
               </div>

@@ -68,6 +68,16 @@ function DrillContent() {
     if (!user) navigate('/auth');
   }, [user, navigate]);
 
+  // ── Force dark mode: drilling pages always use the dark reading surface ──
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const wasLight = root.classList.contains('light');
+    root.classList.remove('light');
+    return () => {
+      if (wasLight) root.classList.add('light');
+    };
+  }, []);
+
   const [session, setSession] = React.useState<DrillSession | null>(null);
   const [currentQuestion, setCurrentQuestion] = React.useState<LRQuestion | null>(null);
   const [selectedAnswer, setSelectedAnswer] = React.useState<string>('');

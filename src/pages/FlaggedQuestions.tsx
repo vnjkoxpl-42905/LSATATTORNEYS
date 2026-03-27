@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Flag, Trash2, Play, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { questionBank } from '@/lib/questionLoader';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface FlaggedQuestion {
   id: string;
@@ -115,6 +116,7 @@ export default function FlaggedQuestions() {
                 </p>
               </div>
             </div>
+            <ThemeToggle />
           </div>
         </div>
       </div>

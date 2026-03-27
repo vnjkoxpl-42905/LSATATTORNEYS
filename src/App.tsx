@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QuestionBankProvider } from "./contexts/QuestionBankContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { UserSettingsProvider } from "./contexts/UserSettingsContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import AcademyFoyer from "./pages/AcademyFoyer";
 import Drill from "./pages/Drill";
@@ -18,6 +19,7 @@ import Classroom from "./pages/Classroom";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
+  <ThemeProvider>
   <AuthProvider>
     <UserSettingsProvider>
       <TooltipProvider>
@@ -51,6 +53,7 @@ const App = () => (
       </TooltipProvider>
     </UserSettingsProvider>
   </AuthProvider>
+  </ThemeProvider>
 );
 
 export default App;
