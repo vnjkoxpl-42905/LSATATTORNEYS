@@ -1574,7 +1574,7 @@ function DrillContent() {
           "transition-all duration-[120ms] ease-out",
           "border-b border-border",
           isEliminated && "opacity-55",
-          showGreenHighlight && "bg-green-50 dark:bg-green-900/20 border-l-4 border-l-green-500"
+          showGreenHighlight && "bg-green-50 border-l-4 border-l-green-500"
         )}
       >
         {/* Radio or selected indicator */}
@@ -1586,11 +1586,11 @@ function DrillContent() {
           )}
         >
           {inFocusedMode && isSelected ? (
-            <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+            <div className="w-5 h-5 rounded-full bg-neutral-900 flex items-center justify-center ring-1 ring-neutral-300">
+              <div className="w-2 h-2 rounded-full bg-white" />
             </div>
           ) : showRadio ? (
-            <RadioGroupItem value={key} id={`answer-${key}`} className="mt-0 pointer-events-none" />
+            <RadioGroupItem value={key} id={`answer-${key}`} className="mt-0 pointer-events-none border-neutral-400 text-neutral-900" />
           ) : (
             <div className="w-5 h-5" />
           )}
@@ -1646,8 +1646,8 @@ function DrillContent() {
             "shrink-0 flex items-center justify-center",
             "w-11 h-11 -my-3 -mr-3",
             "rounded-md transition-all duration-[120ms]",
-            "hover:bg-accent/50 active:scale-95",
-            "text-muted-foreground hover:text-foreground"
+            "hover:bg-neutral-100 active:scale-95",
+            "text-neutral-400 hover:text-neutral-900"
           )}
           aria-pressed={isEliminated}
           aria-label={`Cross out choice ${key}`}
@@ -1991,9 +1991,9 @@ function DrillContent() {
                 
                 {/* Good job message with AI explanation for retry success */}
                 {isRetryAfterWrong && selectedAnswer === currentQuestion.correctAnswer && session.mode === 'adaptive' && (
-                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                    <h4 className="font-semibold text-green-700 dark:text-green-400 mb-2">🎉 Good Job!</h4>
-                    <p className="text-sm text-green-600 dark:text-green-300 leading-relaxed">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-green-700 mb-2">🎉 Good Job!</h4>
+                    <p className="text-sm text-green-600 leading-relaxed">
                       {correctExplanation || 'You got it right on your second try! That shows great learning.'}
                     </p>
                   </div>
