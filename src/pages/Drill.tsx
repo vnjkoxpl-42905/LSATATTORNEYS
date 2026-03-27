@@ -436,20 +436,7 @@ function DrillContent() {
         }
       }
 
-      // Adaptive mode retry: lock answer; useEffect on answerLocked fires handleSubmit() with fresh state
-      if (session?.mode === 'adaptive' && isRetryAfterWrong) {
-        setAnswerLocked(true);
-      }
-
-      // Tutor Mode OFF in adaptive: submit immediately passing the clicked answer directly
-      if (session?.mode === 'adaptive' && !tutorMode && !isRetryAfterWrong) {
-        handleSubmitNonAdaptive(answer);
-      }
-
-      // Tutor Mode ON in adaptive: lock answer immediately; useEffect fires handleSubmit()
-      if (session?.mode === 'adaptive' && tutorMode && !isRetryAfterWrong) {
-        setAnswerLocked(true);
-      }
+      // Adaptive mode: selection only — submission is always manual via the Check Answer button
     }
   };
 
@@ -489,19 +476,6 @@ function DrillContent() {
     }
   };
 
-// Auto-submit when answer is locked (adaptive only)
-React.useEffect(() => {
-  if (session?.mode === 'adaptive') {
-    // If we just closed the tutor, skip one auto-submit cycle
-    if (suppressAutoSubmitOnce) {
-      setSuppressAutoSubmitOnce(false);
-      return;
-    }
-    if (answerLocked && !showSolution && !tutorChatOpen) {
-      handleSubmit();
-    }
-  }
-}, [answerLocked, showSolution, tutorChatOpen, session?.mode, suppressAutoSubmitOnce]);
 
   const saveAttemptToDatabase = async (attemptData: {
     qid: string;
@@ -714,6 +688,8 @@ React.useEffect(() => {
       setSession({ ...session, attempts: newAttempts });
 
       if (tutorMode) {
+        // Lock answer so the selected row shows red feedback while tutor is open
+        setAnswerLocked(true);
         // Show red "Wrong" for 150ms, then open tutor (do not reveal solution yet)
         setIsRetryAfterWrong(true);
         setTimeout(() => {
@@ -1848,66 +1824,44 @@ React.useEffect(() => {
           </div>
         ) : (
           <>
-        {/* Left Panel — Stimulus or Tutor Coach (full-panel swap) */}
+        {/* Left Panel — Stimulus */}
         <div className="flex-1 lg:max-h-full bg-white flex flex-col overflow-hidden">
-          {tutorChatOpen && tutorQuestionSnapshot ? (
-            <ErrorBoundary
-              onReset={() => {
-                setTutorChatOpen(false);
-                setTutorQuestionSnapshot(null);
-                setAnswerLocked(false);
-              }}
-            >
-              <TutorChatModal
-                open={tutorChatOpen}
-                question={tutorQuestionSnapshot}
-                userAnswer={selectedAnswer}
-                onClose={() => {
-                  setSuppressAutoSubmitOnce(true);
-                  setTutorChatOpen(false);
-                  setTutorQuestionSnapshot(null);
-                  setAnswerLocked(false);
-                }}
-              />
-            </ErrorBoundary>
-          ) : (
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-5 sm:p-6 max-w-4xl mx-auto">
-                {currentQuestion.stimulus && (() => {
-                  const fullText = normalizeText(currentQuestion.stimulus);
-                  const stimulusHighlights = highlights.get(currentQuestion.qid)?.filter(h => h.section === 'stimulus') || [];
-                  return (
-                    <div
-                      className={cn(
-                        "prose prose-sm max-w-none",
-                        "text-[14px] leading-[1.5] text-neutral-900",
-                        highlightMode !== 'none' ? 'select-text cursor-text' : 'select-none cursor-default'
-                      )}
-                      onMouseUp={(e) => handleTextSelection(e, 'stimulus')}
-                    >
-                      <HighlightedText
-                        text={fullText}
-                        highlights={stimulusHighlights}
-                        onHighlightClick={handleHighlightClick}
-                        eraserMode={highlightMode === 'erase'}
-                      />
-                    </div>
-                  );
-                })()}
-
-                {showVoiceChip && (
-                  <div className="mt-6 flex justify-center">
-                    <VoiceCoachChip
-                      onActivate={() => {
-                        setShowVoiceChip(false);
-                        setVoiceCoachOpen(true);
-                      }}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-5 sm:p-6 max-w-4xl mx-auto">
+              {currentQuestion.stimulus && (() => {
+                const fullText = normalizeText(currentQuestion.stimulus);
+                const stimulusHighlights = highlights.get(currentQuestion.qid)?.filter(h => h.section === 'stimulus') || [];
+                return (
+                  <div
+                    className={cn(
+                      "prose prose-sm max-w-none",
+                      "text-[14px] leading-[1.5] text-neutral-900",
+                      highlightMode !== 'none' ? 'select-text cursor-text' : 'select-none cursor-default'
+                    )}
+                    onMouseUp={(e) => handleTextSelection(e, 'stimulus')}
+                  >
+                    <HighlightedText
+                      text={fullText}
+                      highlights={stimulusHighlights}
+                      onHighlightClick={handleHighlightClick}
+                      eraserMode={highlightMode === 'erase'}
                     />
                   </div>
-                )}
-              </div>
+                );
+              })()}
+
+              {showVoiceChip && (
+                <div className="mt-6 flex justify-center">
+                  <VoiceCoachChip
+                    onActivate={() => {
+                      setShowVoiceChip(false);
+                      setVoiceCoachOpen(true);
+                    }}
+                  />
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Right Panel - Question & Answers */}
@@ -1989,6 +1943,19 @@ React.useEffect(() => {
                   size="lg"
                 >
                   Show Answer
+                </Button>
+              </div>
+            )}
+
+            {/* Submit button for adaptive mode — only manual submission triggers evaluation */}
+            {session.mode === 'adaptive' && selectedAnswer && !showSolution && !tutorChatOpen && (
+              <div className="flex justify-end gap-3 pt-6 mt-2">
+                <Button
+                  onClick={handleSubmit}
+                  size="lg"
+                  disabled={timer?.isPaused}
+                >
+                  Check Answer
                 </Button>
               </div>
             )}
@@ -2176,6 +2143,29 @@ React.useEffect(() => {
         onClose={() => setVoiceCoachOpen(false)}
         showContrast={settings.showContrast}
       />
+
+      {/* Floating Tutor Card — fixed bottom-left, rendered at page root so fixed positioning isn't clipped */}
+      {tutorChatOpen && tutorQuestionSnapshot && (
+        <ErrorBoundary
+          onReset={() => {
+            setTutorChatOpen(false);
+            setTutorQuestionSnapshot(null);
+            setAnswerLocked(false);
+          }}
+        >
+          <TutorChatModal
+            open={tutorChatOpen}
+            question={tutorQuestionSnapshot}
+            userAnswer={selectedAnswer}
+            onClose={() => {
+              setSuppressAutoSubmitOnce(true);
+              setTutorChatOpen(false);
+              setTutorQuestionSnapshot(null);
+              setAnswerLocked(false);
+            }}
+          />
+        </ErrorBoundary>
+      )}
     </div>
     </>
   );
