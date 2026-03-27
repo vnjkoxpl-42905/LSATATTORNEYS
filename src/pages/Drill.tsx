@@ -10,7 +10,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { TimerControls } from '@/components/drill/TimerControls';
 import { TutorChatModal } from '@/components/drill/TutorChatModal';
-import { ConfidenceSelector } from '@/components/drill/ConfidenceSelector';
 import { ReviewModal } from '@/components/drill/ReviewModal';
 import { VoiceCoachChip } from '@/components/drill/VoiceCoachChip';
 import { VoiceCoachModal } from '@/components/drill/VoiceCoachModal';
@@ -72,7 +71,6 @@ function DrillContent() {
   const [session, setSession] = React.useState<DrillSession | null>(null);
   const [currentQuestion, setCurrentQuestion] = React.useState<LRQuestion | null>(null);
   const [selectedAnswer, setSelectedAnswer] = React.useState<string>('');
-  const [confidence, setConfidence] = React.useState<number | null>(null);
   const [showSolution, setShowSolution] = React.useState(false);
   const [tutorChatOpen, setTutorChatOpen] = React.useState(false);
   const [suppressAutoSubmitOnce, setSuppressAutoSubmitOnce] = React.useState(false);
@@ -354,7 +352,6 @@ function DrillContent() {
 
   const resetPerQuestionState = () => {
     setSelectedAnswer('');
-    setConfidence(null);
     setShowSolution(false);
     setTutorChatOpen(false);
     setTutorMessages([]);
@@ -397,7 +394,7 @@ function DrillContent() {
   const handleAnswerSelect = (answer: string) => {
     // In practice-set mode, don't lock after answer selection
     // In adaptive mode after wrong answer, allow unlimited retries (don't lock)
-    if (!isPracticeSetMode && !isRetryAfterWrong && confidence !== null) return;
+    if (!isPracticeSetMode && !isRetryAfterWrong && answerLocked) return;
     // When tutor mode is off, block answer changes after submission
     if (!tutorMode && showSolution) return;
     
@@ -439,21 +436,19 @@ function DrillContent() {
         }
       }
 
-      // Adaptive mode retry: if already have confidence and retrying, auto-submit
-      if (session?.mode === 'adaptive' && isRetryAfterWrong && confidence !== null) {
+      // Adaptive mode retry: lock answer; useEffect on answerLocked fires handleSubmit() with fresh state
+      if (session?.mode === 'adaptive' && isRetryAfterWrong) {
         setAnswerLocked(true);
-        // Trigger submit after state updates
-        requestAnimationFrame(() => {
-          handleSubmit();
-        });
       }
 
-      // Tutor Mode OFF in adaptive: auto-submit on answer selection (no confidence needed)
+      // Tutor Mode OFF in adaptive: submit immediately passing the clicked answer directly
       if (session?.mode === 'adaptive' && !tutorMode && !isRetryAfterWrong) {
-        // Use a microtask so selectedAnswer state is committed first
-        requestAnimationFrame(() => {
-          handleSubmitNonAdaptive();
-        });
+        handleSubmitNonAdaptive(answer);
+      }
+
+      // Tutor Mode ON in adaptive: lock answer immediately; useEffect fires handleSubmit()
+      if (session?.mode === 'adaptive' && tutorMode && !isRetryAfterWrong) {
+        setAnswerLocked(true);
       }
     }
   };
@@ -494,7 +489,7 @@ function DrillContent() {
     }
   };
 
-// Auto-submit when confidence is selected (adaptive only)
+// Auto-submit when answer is locked (adaptive only)
 React.useEffect(() => {
   if (session?.mode === 'adaptive') {
     // If we just closed the tutor, skip one auto-submit cycle
@@ -502,12 +497,11 @@ React.useEffect(() => {
       setSuppressAutoSubmitOnce(false);
       return;
     }
-    // Adaptive: wait for confidence
-    if (answerLocked && confidence !== null && !showSolution && !tutorChatOpen) {
+    if (answerLocked && !showSolution && !tutorChatOpen) {
       handleSubmit();
     }
   }
-}, [confidence, answerLocked, showSolution, tutorChatOpen, session?.mode, suppressAutoSubmitOnce]);
+}, [answerLocked, showSolution, tutorChatOpen, session?.mode, suppressAutoSubmitOnce]);
 
   const saveAttemptToDatabase = async (attemptData: {
     qid: string;
@@ -563,10 +557,10 @@ React.useEffect(() => {
       time_ms: timeMs,
       qtype: currentQuestion.qtype,
       level: currentQuestion.difficulty,
-      confidence,
+      confidence: null,
       mode: session.mode,
     });
-    
+
     // Save to WAJ database with real review data
     const { logWrongAnswer } = await import('@/lib/wajService');
     try {
@@ -581,7 +575,7 @@ React.useEffect(() => {
         chosen_answer: selectedAnswer,
         correct_answer: currentQuestion.correctAnswer,
         time_ms: timeMs,
-        confidence_1_5: confidence,
+        confidence_1_5: null,
         review: {
           q1: review.whyWrong,
           q2: review.whyEliminated,
@@ -599,7 +593,7 @@ React.useEffect(() => {
       correct: false,
       timeMs,
       timestamp: Date.now(),
-      confidence,
+      confidence: null,
       reviewDone: true,
     });
 
@@ -626,10 +620,11 @@ React.useEffect(() => {
     // (Removed auto-advance)
   };
 
-  const handleSubmitNonAdaptive = async () => {
-    if (!currentQuestion || !selectedAnswer || !session) return;
+  const handleSubmitNonAdaptive = async (answerOverride?: string) => {
+    const ans = answerOverride ?? selectedAnswer;
+    if (!currentQuestion || !ans || !session) return;
 
-    const correct = selectedAnswer === currentQuestion.correctAnswer;
+    const correct = ans === currentQuestion.correctAnswer;
     const timeMs = Math.floor(performance.now() - questionStartTime);
 
     // Save attempt to database (no confidence for non-adaptive)
@@ -645,7 +640,7 @@ React.useEffect(() => {
 
     const newAttempts = new Map(session.attempts);
     newAttempts.set(currentQuestion.qid, {
-      selectedAnswer,
+      selectedAnswer: ans,
       correct,
       timeMs,
       timestamp: Date.now(),
@@ -672,7 +667,7 @@ React.useEffect(() => {
   };
 
   const handleSubmit = async () => {
-    if (!currentQuestion || !selectedAnswer || confidence === null || !session) return;
+    if (!currentQuestion || !selectedAnswer || !session) return;
 
     const correct = selectedAnswer === currentQuestion.correctAnswer;
     const timeMs = Math.floor(performance.now() - questionStartTime);
@@ -686,7 +681,7 @@ React.useEffect(() => {
         time_ms: timeMs,
         qtype: currentQuestion.qtype,
         level: currentQuestion.difficulty,
-        confidence,
+        confidence: null,
         mode: session.mode,
       });
 
@@ -697,7 +692,7 @@ React.useEffect(() => {
         correct: false,
         timeMs,
         timestamp: Date.now(),
-        confidence,
+        confidence: null,
         reviewDone: false,
       });
 
@@ -744,7 +739,7 @@ React.useEffect(() => {
         time_ms: timeMs,
         qtype: currentQuestion.qtype,
         level: currentQuestion.difficulty,
-        confidence,
+        confidence: null,
         mode: session.mode,
       });
 
@@ -754,7 +749,7 @@ React.useEffect(() => {
         correct,
         timeMs,
         timestamp: Date.now(),
-        confidence,
+        confidence: null,
         reviewDone: false,
       });
 
@@ -786,7 +781,7 @@ React.useEffect(() => {
           chosen_answer: selectedAnswer,
           correct_answer: currentQuestion.correctAnswer,
           time_ms: timeMs,
-          confidence_1_5: confidence,
+          confidence_1_5: null,
         });
       } catch (error) {
         console.error('Failed to log to WAJ:', error);
@@ -928,10 +923,10 @@ React.useEffect(() => {
         time_ms: timingMetrics.totalTimeMs,
         qtype: question.qtype,
         level: question.difficulty,
-        confidence: attempt.confidence || null,
+        confidence: null,
         mode: 'practice-set',
       });
-      
+
       // Log to WAJ if wrong
       if (!attempt.correct) {
         const { logWrongAnswer } = await import('@/lib/wajService');
@@ -947,7 +942,7 @@ React.useEffect(() => {
             chosen_answer: attempt.selectedAnswer,
             correct_answer: question.correctAnswer,
             time_ms: timingMetrics.totalTimeMs,
-            confidence_1_5: attempt.confidence || null,
+            confidence_1_5: null,
           });
         } catch (error) {
           console.error('Failed to log to WAJ:', error);
@@ -957,23 +952,6 @@ React.useEffect(() => {
     
     // Show results
     setPostSectionScreen('score-report');
-  };
-
-  const handleConfidenceSelect = (level: number) => {
-    if (!currentQuestion || !session || !isPracticeSetMode) return;
-    
-    setConfidence(level);
-    
-    // Update session with confidence
-    const newAttempts = new Map(session.attempts);
-    const existingAttempt = newAttempts.get(currentQuestion.qid);
-    if (existingAttempt) {
-      newAttempts.set(currentQuestion.qid, {
-        ...existingAttempt,
-        confidence: level,
-      });
-      setSession({ ...session, attempts: newAttempts });
-    }
   };
 
   const handleNext = () => {
@@ -1604,7 +1582,7 @@ React.useEffect(() => {
     const isWrong = key === selectedAnswer && !isCorrect;
     // Hide feedback during section mode
     const showFeedback = session?.mode !== 'full-section' && isSelected && (
-      tutorMode ? (answerLocked && confidence !== null) : showSolution
+      tutorMode ? answerLocked : showSolution
     );
     // Show green highlight when solution is revealed and this is the correct answer
     const showGreenHighlight = showSolution && isCorrect;
@@ -1616,7 +1594,7 @@ React.useEffect(() => {
       <div
         key={key}
         className={cn(
-          "group relative flex items-start gap-3 py-2.5 px-4 -mx-4",
+          "group relative flex items-start gap-3 py-1.5 px-4 -mx-4",
           "transition-all duration-[120ms] ease-out",
           "border-b border-border",
           isEliminated && "opacity-55",
@@ -1662,14 +1640,14 @@ React.useEffect(() => {
             htmlFor={`answer-${key}`}
             className={cn(
               "flex-1 cursor-pointer",
-              "text-[16px] leading-[1.6]",
-              "font-normal text-foreground",
+              "text-[14px] leading-[1.45]",
+              "font-normal text-neutral-900",
               "select-none",
               "transition-all duration-[120ms]",
               isEliminated && "line-through decoration-2 decoration-muted-foreground"
             )}
           >
-            <span className="font-semibold mr-3 text-muted-foreground">({key})</span>
+            <span className="font-semibold mr-3 text-neutral-700">({key})</span>
             <span>{text}</span>
             {!isSectionMode && showFeedback && (
               <Badge
@@ -1870,80 +1848,76 @@ React.useEffect(() => {
           </div>
         ) : (
           <>
-        {/* Left Panel - Stimulus */}
-        <div className="flex-1 overflow-y-auto lg:max-h-full">
-          <div className="p-4 sm:p-6 max-w-4xl mx-auto pb-4">
-            {currentQuestion.stimulus && (() => {
-              const fullText = normalizeText(currentQuestion.stimulus);
-              const stimulusHighlights = highlights.get(currentQuestion.qid)?.filter(h => h.section === 'stimulus') || [];
-              
-              return (
-                <div 
-                  className={cn(
-                    "prose prose-lg max-w-none",
-                    "text-[15px] leading-[1.6] text-foreground",
-                    highlightMode !== 'none' ? 'select-text cursor-text' : 'select-none cursor-default'
-                  )}
-                  onMouseUp={(e) => handleTextSelection(e, 'stimulus')}
-                >
-                  <HighlightedText
-                    text={fullText}
-                    highlights={stimulusHighlights}
-                    onHighlightClick={handleHighlightClick}
-                    eraserMode={highlightMode === 'erase'}
-                  />
-                </div>
-              );
-            })()}
+        {/* Left Panel — Stimulus or Tutor Coach (full-panel swap) */}
+        <div className="flex-1 lg:max-h-full bg-white flex flex-col overflow-hidden">
+          {tutorChatOpen && tutorQuestionSnapshot ? (
+            <ErrorBoundary
+              onReset={() => {
+                setTutorChatOpen(false);
+                setTutorQuestionSnapshot(null);
+                setAnswerLocked(false);
+              }}
+            >
+              <TutorChatModal
+                open={tutorChatOpen}
+                question={tutorQuestionSnapshot}
+                userAnswer={selectedAnswer}
+                onClose={() => {
+                  setSuppressAutoSubmitOnce(true);
+                  setTutorChatOpen(false);
+                  setTutorQuestionSnapshot(null);
+                  setAnswerLocked(false);
+                }}
+              />
+            </ErrorBoundary>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-5 sm:p-6 max-w-4xl mx-auto">
+                {currentQuestion.stimulus && (() => {
+                  const fullText = normalizeText(currentQuestion.stimulus);
+                  const stimulusHighlights = highlights.get(currentQuestion.qid)?.filter(h => h.section === 'stimulus') || [];
+                  return (
+                    <div
+                      className={cn(
+                        "prose prose-sm max-w-none",
+                        "text-[14px] leading-[1.5] text-neutral-900",
+                        highlightMode !== 'none' ? 'select-text cursor-text' : 'select-none cursor-default'
+                      )}
+                      onMouseUp={(e) => handleTextSelection(e, 'stimulus')}
+                    >
+                      <HighlightedText
+                        text={fullText}
+                        highlights={stimulusHighlights}
+                        onHighlightClick={handleHighlightClick}
+                        eraserMode={highlightMode === 'erase'}
+                      />
+                    </div>
+                  );
+                })()}
 
-            {/* Voice Coach & Tutor */}
-            {showVoiceChip && (
-              <div className="mt-6 flex justify-center">
-                <VoiceCoachChip
-                  onActivate={() => {
-                    setShowVoiceChip(false);
-                    setVoiceCoachOpen(true);
-                  }}
-                />
+                {showVoiceChip && (
+                  <div className="mt-6 flex justify-center">
+                    <VoiceCoachChip
+                      onActivate={() => {
+                        setShowVoiceChip(false);
+                        setVoiceCoachOpen(true);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
-            )}
-
-            {tutorChatOpen && tutorQuestionSnapshot && (
-              <div className="mt-6">
-                <ErrorBoundary
-                  onReset={() => {
-                    setTutorChatOpen(false);
-                    setTutorQuestionSnapshot(null);
-                    setAnswerLocked(false);
-                  }}
-                >
-                  <TutorChatModal
-                    open={tutorChatOpen}
-                    question={tutorQuestionSnapshot}
-                    userAnswer={selectedAnswer}
-onClose={() => {
-  console.debug('Closing tutor modal');
-  // Prevent unintended auto-submit right after closing tutor
-  setSuppressAutoSubmitOnce(true);
-  setTutorChatOpen(false);
-  setTutorQuestionSnapshot(null);
-  setAnswerLocked(false); // Clear red state, re-enable choices
-}}
-                  />
-                </ErrorBoundary>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Right Panel - Question & Answers */}
-        <div className="flex-1 overflow-y-auto lg:border-l border-border lg:max-h-full">
-          <div className="p-4 sm:p-6 max-w-3xl pb-4">
-            {/* Question Stem - Large and confident */}
-            <div className="mb-5">
-              <div 
+        <div className="flex-1 overflow-y-auto lg:border-l border-border lg:max-h-full bg-white">
+          <div className="p-5 sm:p-6 max-w-3xl">
+            {/* Question Stem */}
+            <div className="mb-3">
+              <div
                 className={cn(
-                  "text-[19px] font-semibold text-foreground leading-[1.5] tracking-tight",
+                  "text-[15px] font-semibold text-neutral-900 leading-[1.4] tracking-tight",
                   highlightMode !== 'none' ? 'select-text cursor-text' : 'select-none cursor-default'
                 )}
                 onMouseUp={(e) => handleTextSelection(e, 'stem')}
@@ -1972,7 +1946,7 @@ onClose={() => {
                       )}
 
                       <div className="relative my-4">
-                        <div className="absolute -inset-2 bg-gradient-to-r from-primary/10 to-accent-bronze/10 rounded-lg blur-sm" />
+                        <div className="absolute -inset-2 bg-neutral-100/80 rounded-lg blur-sm" />
                         <div className="relative">
                           {renderAnswerChoice(selected[0], selected[1], { 
                             isSelected: true, 
@@ -2006,25 +1980,6 @@ onClose={() => {
               </RadioGroup>
             )}
 
-            {/* Confidence selector - for adaptive and practice-set modes (only when Tutor Mode is ON) */}
-            {tutorMode && (session.mode === 'adaptive' || isPracticeSetMode) && selectedAnswer && !tutorChatOpen && (
-              <div className="space-y-3 pt-8">
-                <Label className="text-sm font-medium">Confidence (1–5)</Label>
-                <ConfidenceSelector
-                  value={confidence}
-                  onChange={(level) => {
-                    if (isPracticeSetMode) {
-                      handleConfidenceSelect(level);
-                    } else {
-                      setConfidence(level);
-                      setAnswerLocked(true);
-                    }
-                  }}
-                  disabled={!isPracticeSetMode && !isRetryAfterWrong && showSolution}
-                />
-              </div>
-            )}
-            
             {/* Show Answer button for practice-set mode */}
             {isPracticeSetMode && selectedAnswer && !showSolution && (
               <div className="flex justify-center pt-6">

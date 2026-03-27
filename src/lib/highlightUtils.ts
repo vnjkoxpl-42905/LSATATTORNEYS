@@ -11,40 +11,57 @@ export interface Highlight {
 
 export function captureTextSelection(container: HTMLElement): { start: number; end: number; text: string } | null {
   const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
-    return null;
-  }
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return null;
 
   const range = selection.getRangeAt(0);
-  
-  // Check if selection is within the container
-  if (!container.contains(range.commonAncestorContainer)) {
-    return null;
+  if (!container.contains(range.commonAncestorContainer)) return null;
+
+  const selectedText = selection.toString();
+  if (!selectedText) return null;
+
+  // ── Accurate offset mapping via data-para-start annotations ──────────────
+  // HighlightedText annotates each <p> / dialogue-turn body with its raw-string
+  // start offset. Within a single annotated segment there are no block boundaries,
+  // so DOM text length == raw text length — no \n\n drift.
+  const segments = Array.from(container.querySelectorAll<HTMLElement>('[data-para-start]'));
+
+  if (segments.length > 0) {
+    // Returns the character offset from the start of `seg` to `node:nodeOffset`
+    const withinOffset = (seg: HTMLElement, node: Node, nodeOffset: number): number => {
+      const r = document.createRange();
+      r.setStart(seg, 0);
+      r.setEnd(node, nodeOffset);
+      return r.toString().length;
+    };
+
+    // Find the annotated segment that contains a given DOM node
+    const findSeg = (node: Node): HTMLElement | null => {
+      for (const seg of segments) {
+        if (seg === node || seg.contains(node)) return seg;
+      }
+      return null;
+    };
+
+    const startSeg = findSeg(range.startContainer);
+    const endSeg   = findSeg(range.endContainer);
+
+    if (startSeg && endSeg) {
+      const rawStart = parseInt(startSeg.getAttribute('data-para-start') ?? '0')
+        + withinOffset(startSeg, range.startContainer, range.startOffset);
+      const rawEnd   = parseInt(endSeg.getAttribute('data-para-start') ?? '0')
+        + withinOffset(endSeg, range.endContainer, range.endOffset);
+      return { start: rawStart, end: rawEnd, text: selectedText };
+    }
   }
 
-  // Get the full text content of the container
-  const fullText = container.textContent || '';
-  const selectedText = selection.toString();
-  
-  // Create a range for the entire container
+  // ── Fallback for containers without data-para-start ──────────────────────
   const containerRange = document.createRange();
   containerRange.selectNodeContents(container);
-  
-  // Get text before the selection
   const beforeRange = containerRange.cloneRange();
   beforeRange.setEnd(range.startContainer, range.startOffset);
-  const textBefore = beforeRange.toString();
-  
-  const start = textBefore.length;
-  const end = start + selectedText.length;
-
-  console.log('Captured selection:', { start, end, text: selectedText, fullTextLength: fullText.length });
-
-  return {
-    start,
-    end,
-    text: selectedText
-  };
+  const start = beforeRange.toString().length;
+  const end   = start + selectedText.length;
+  return { start, end, text: selectedText };
 }
 
 export function replaceOverlappingHighlights(

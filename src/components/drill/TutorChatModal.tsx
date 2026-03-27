@@ -1,12 +1,8 @@
 import * as React from "react";
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Sparkles } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { normalizeText } from '@/lib/utils';
 import type { LRQuestion } from '@/lib/questionLoader';
 import { toast } from 'sonner';
 
@@ -22,43 +18,50 @@ interface TutorChatModalProps {
   onClose: () => void;
 }
 
-export function TutorChatModal({ 
-  open, 
-  question, 
-  userAnswer, 
-  onClose
+export function TutorChatModal({
+  open,
+  question,
+  userAnswer,
+  onClose,
 }: TutorChatModalProps) {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [input, setInput] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [initializing, setInitializing] = React.useState(true);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [showPassage, setShowPassage] = React.useState(false);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-  // Auto-scroll to bottom when messages change
+  // Scroll to bottom as messages arrive
   React.useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
 
-  // Initialize with Socratic question
+  // Focus input when coaching surface is ready
+  React.useEffect(() => {
+    if (!isLoading && !initializing) {
+      inputRef.current?.focus();
+    }
+  }, [isLoading, initializing]);
+
+  // Open → load first Socratic question
   React.useEffect(() => {
     if (open && question && initializing) {
       loadInitialQuestion();
     }
   }, [open, question, initializing]);
 
-  // Reset when modal closes
+  // Reset state on close
   React.useEffect(() => {
     if (!open) {
       setMessages([]);
       setInput('');
       setInitializing(true);
       setIsLoading(false);
+      setShowPassage(false);
     }
   }, [open]);
 
-  // Helper to extract detailed error from Supabase Edge Function responses
   const extractFunctionError = async (err: any): Promise<string> => {
     try {
       const ctx = (err as any)?.context;
@@ -81,9 +84,7 @@ export function TutorChatModal({
 
   const loadInitialQuestion = async () => {
     if (!question) return;
-
     setIsLoading(true);
-    console.debug('TutorChatModal: Loading initial Socratic question', { qid: question.qid });
     try {
       const questionData = {
         qid: question.qid,
@@ -101,27 +102,15 @@ export function TutorChatModal({
         answerChoiceExplanations: question.answerChoiceExplanations,
         reasoningType: question.reasoningType,
       };
-
       const { data, error } = await supabase.functions.invoke('tutor-chat', {
-        body: {
-          question: questionData,
-          messages: [],
-        },
+        body: { question: questionData, messages: [] },
       });
-
       if (error) throw error;
-
       setMessages([{ role: 'assistant', content: data.content }]);
       setInitializing(false);
     } catch (e: any) {
-      console.error('Failed to load initial question:', e);
       const msg = await extractFunctionError(e);
-      setMessages([
-        {
-          role: 'assistant',
-          content: msg,
-        },
-      ]);
+      setMessages([{ role: 'assistant', content: msg }]);
       setInitializing(false);
       toast.error(msg);
     } finally {
@@ -131,13 +120,10 @@ export function TutorChatModal({
 
   const handleSend = async () => {
     if (!input.trim() || !question || isLoading) return;
-
     const userMessage = input.trim();
-    console.debug('TutorChatModal: Sending user message', { qid: question.qid });
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
-
     try {
       const questionData = {
         qid: question.qid,
@@ -155,121 +141,129 @@ export function TutorChatModal({
         answerChoiceExplanations: question.answerChoiceExplanations,
         reasoningType: question.reasoningType,
       };
-
       const { data, error } = await supabase.functions.invoke('tutor-chat', {
         body: {
           question: questionData,
           messages: [...messages, { role: 'user', content: userMessage }],
         },
       });
-
       if (error) throw error;
-
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.content }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
     } catch (e: any) {
-      console.error('Failed to send message:', e);
       const msg = await extractFunctionError(e);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: msg,
-        },
-      ]);
+      setMessages(prev => [...prev, { role: 'assistant', content: msg }]);
       toast.error(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleSend();
     }
   };
 
-  // Early return guards
-  if (!open) return null;
-  if (!question) {
-    console.warn('TutorChatModal: opened without a valid question');
-    return null;
-  }
+  if (!open || !question) return null;
+
+  const hasPassage = !!question.stimulus;
 
   return (
-    <Card className="relative overflow-hidden rounded-lg border bg-card shadow-sm animate-in slide-in-from-top-2 duration-300">
-      <CardHeader className="relative px-4 py-3 border-b">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Joshua</h3>
-        </div>
-      </CardHeader>
+    <div className="h-full flex flex-col bg-white select-none">
 
-      <CardContent className="relative p-0">
-        <ScrollArea ref={scrollRef} className="h-[220px]">
-          <div className="space-y-2.5 p-3">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[85%] rounded-md p-2 text-sm ${
-                    msg.role === 'user'
-                      ? 'bg-primary/10 border border-primary/20'
-                      : 'bg-muted border border-border'
-                  }`}
+      {/* ── Header ─────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-neutral-100 shrink-0">
+        <span className="text-[10px] tracking-[0.18em] text-neutral-400 font-medium uppercase">
+          Joshua
+        </span>
+        {hasPassage && (
+          <button
+            onClick={() => setShowPassage(v => !v)}
+            className="text-[11px] text-neutral-400 hover:text-neutral-700 transition-colors duration-150"
+          >
+            {showPassage ? '← Back' : 'Passage'}
+          </button>
+        )}
+      </div>
+
+      {/* ── Body — messages or passage peek ────────────────────────── */}
+      {showPassage ? (
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <p className="text-[13px] leading-[1.65] text-neutral-700 whitespace-pre-wrap select-text">
+            {normalizeText(question.stimulus!)}
+          </p>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="space-y-5">
+            {messages.map((msg, idx) =>
+              msg.role === 'assistant' ? (
+                <p
+                  key={idx}
+                  className="text-[14px] leading-[1.65] text-neutral-800 whitespace-pre-wrap animate-in fade-in duration-200 select-text"
                 >
-                  <div className="text-xs font-medium mb-1 text-muted-foreground">
-                    {msg.role === 'user' ? 'You' : 'Joshua'}
-                  </div>
-                  <div className="text-sm whitespace-pre-wrap leading-relaxed text-foreground">
-                    {msg.content}
-                  </div>
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-muted border border-border rounded-md p-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                </div>
-              </div>
+                  {msg.content}
+                </p>
+              ) : (
+                <p
+                  key={idx}
+                  className="text-right text-[13px] leading-[1.5] text-neutral-400 italic whitespace-pre-wrap animate-in fade-in duration-150 select-text"
+                >
+                  {msg.content}
+                </p>
+              )
             )}
-          </div>
-        </ScrollArea>
-      </CardContent>
 
-      <CardFooter className="relative p-3 border-t flex-col gap-2">
-        <Textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Ask a follow-up question..."
-          rows={1}
-          disabled={isLoading}
-          className="resize-none text-sm"
-        />
-        
-        <div className="flex gap-2 w-full">
-          <Button 
-            onClick={handleSend} 
-            disabled={!input.trim() || isLoading} 
-            className="flex-1"
-            size="sm"
-          >
-            Send
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={onClose} 
-            className="flex-1"
-            size="sm"
-          >
-            Return to question
-          </Button>
+            {(isLoading || initializing) && (
+              <p className="text-[18px] tracking-widest text-neutral-300 animate-pulse leading-none">
+                ···
+              </p>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
         </div>
-      </CardFooter>
-    </Card>
+      )}
+
+      {/* ── Input + return ─────────────────────────────────────────── */}
+      {!showPassage && (
+        <div className="shrink-0 border-t border-neutral-100">
+          <div className="flex items-center gap-3 px-6 py-3">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isLoading || initializing}
+              placeholder="Ask a follow-up…"
+              className="flex-1 bg-transparent border-0 outline-none text-[14px] text-neutral-900 placeholder:text-neutral-300 disabled:opacity-40 select-text"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading || initializing}
+              className={cn(
+                "shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150",
+                input.trim() && !isLoading && !initializing
+                  ? "bg-neutral-900 text-white hover:bg-neutral-700 active:scale-95"
+                  : "bg-neutral-100 text-neutral-300 cursor-not-allowed"
+              )}
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="px-6 pb-5">
+            <button
+              onClick={onClose}
+              className="text-[11px] text-neutral-300 hover:text-neutral-500 transition-colors duration-150"
+            >
+              Return to question →
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -3,19 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserSettings } from '@/contexts/UserSettingsContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, LogOut, User, MessageSquare, Award, Clock, Library, RefreshCw } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ArrowLeft, LogOut, Clock, Library, RefreshCw, Bot } from 'lucide-react';
 import { toast } from 'sonner';
 import { QuestionPoolService } from '@/lib/questionPoolService';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { XPBar } from '@/components/gamification/XPBar';
-import { BadgeGallery } from '@/components/gamification/BadgeGallery';
+import { getLevelProgress } from '@/lib/gamification';
+import { cn } from '@/lib/utils';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
 interface StatsData {
   xp_total?: number;
   streak_current?: number;
@@ -26,6 +33,113 @@ interface StatsData {
   longest_streak?: number;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Academic phase mapping  (replaces "Level")
+// ─────────────────────────────────────────────────────────────────────────────
+function getPhase(level: number): { roman: string; label: string } {
+  if (level <= 3)  return { roman: 'I',   label: 'Foundation' };
+  if (level <= 6)  return { roman: 'II',  label: 'Development' };
+  if (level <= 10) return { roman: 'III', label: 'Competency' };
+  if (level <= 15) return { roman: 'IV',  label: 'Proficiency' };
+  return            { roman: 'V',   label: 'Mastery' };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared primitive components
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Charcoal card with inset top-light + razor edge ring */
+function PremiumCard({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        'bg-neutral-900 rounded-xl',
+        'ring-1 ring-white/[0.04]',
+        'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Instrument-grade label */
+function IL({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium select-none">
+      {children}
+    </span>
+  );
+}
+
+/** Card section header */
+function SectionHead({
+  icon: Icon,
+  title,
+}: {
+  icon: React.ElementType;
+  title: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <Icon className="h-3.5 w-3.5 text-neutral-500" />
+      <IL>{title}</IL>
+    </div>
+  );
+}
+
+/** Settings toggle row */
+function ToggleRow({
+  label,
+  description,
+  checked,
+  onCheckedChange,
+  disabled,
+  indent,
+}: {
+  label: string;
+  description?: string;
+  checked: boolean;
+  onCheckedChange: (v: boolean) => void;
+  disabled?: boolean;
+  indent?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex items-start justify-between gap-4 py-3',
+        indent && 'pl-3',
+        disabled && 'opacity-35 pointer-events-none',
+      )}
+    >
+      <div className="min-w-0">
+        <div className="text-[13px] text-neutral-300 leading-snug">{label}</div>
+        {description && (
+          <div className="text-[11px] text-neutral-600 mt-0.5 leading-snug">
+            {description}
+          </div>
+        )}
+      </div>
+      <Switch
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        disabled={disabled}
+        className="mt-0.5 shrink-0"
+      />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────────────────────
 export default function Profile() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -33,20 +147,15 @@ export default function Profile() {
   const [stats, setStats] = React.useState<StatsData | null>(null);
   const [loading, setLoading] = React.useState(true);
 
+  // ── Auth guard + data load ────────────────────────────────────────────────
   React.useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-
+    if (!user) { navigate('/auth'); return; }
     loadProfile();
   }, [user, navigate]);
 
   const loadProfile = async () => {
     if (!user) return;
-
     try {
-      // First get class_id from students table
       const { data: student } = await supabase
         .from('students')
         .select('class_id')
@@ -54,16 +163,15 @@ export default function Profile() {
         .maybeSingle();
 
       if (student?.class_id) {
-        // Then get stats from profiles table using class_id
         const { data: profileStats } = await supabase
           .from('profiles')
-          .select('xp_total, streak_current, overall_answered, overall_correct, class_id, level, longest_streak')
+          .select(
+            'xp_total, streak_current, overall_answered, overall_correct, class_id, level, longest_streak',
+          )
           .eq('class_id', student.class_id)
           .maybeSingle();
 
-        if (profileStats) {
-          setStats(profileStats);
-        }
+        if (profileStats) setStats(profileStats);
       }
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -79,282 +187,345 @@ export default function Profile() {
 
   const handleResetPool = async () => {
     if (!stats?.class_id) return;
-    
     try {
       await QuestionPoolService.resetPool(stats.class_id);
-      toast.success('Question pool reset successfully');
-    } catch (error) {
+      toast.success('Question pool reset');
+    } catch {
       toast.error('Failed to reset question pool');
     }
   };
 
+  // ── Derived display values ────────────────────────────────────────────────
+  const email        = user?.email ?? '';
+  const displayName  =
+    user?.user_metadata?.display_name ||
+    user?.user_metadata?.username ||
+    email.split('@')[0] ||
+    'Student';
+  const initials     = displayName.slice(0, 2).toUpperCase();
+  const capitalName  =
+    displayName.charAt(0).toUpperCase() + displayName.slice(1).toLowerCase();
+
+  const level         = stats?.level ?? 1;
+  const totalXP       = stats?.xp_total ?? 0;
+  const phase         = getPhase(level);
+  const progress      = getLevelProgress(totalXP, level);
+
+  const endurance     = stats?.streak_current ?? 0;
+  const bestEndurance = stats?.longest_streak ?? 0;
+  const volumeLogged  = stats?.overall_answered ?? 0;
+  const accuracy      =
+    volumeLogged > 0
+      ? Math.round(((stats?.overall_correct ?? 0) / volumeLogged) * 100)
+      : 0;
+
+  const memberSince = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+      })
+    : null;
+
+  // ── Loading state ─────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading profile...</div>
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border border-white/10 border-t-white/30 rounded-full animate-spin" />
+          <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-600">Loading</p>
+        </div>
       </div>
     );
   }
 
-  const email = user?.email ?? 'user@example.com';
-  const displayName = email.split('@')[0] || 'User';
-  const initials = displayName.slice(0, 2).toUpperCase() || 'U';
-  const memberSince = user?.created_at || stats?.class_id;
-
+  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="container mx-auto px-4 py-8 max-w-2xl animate-fade-in">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/')}
-          className="mb-6"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Button>
+    <div className="min-h-screen bg-neutral-950">
 
-        <Card className="hover:shadow-lg transition-all duration-300">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Avatar className="h-24 w-24">
-                <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
-              </Avatar>
-            </div>
-            <CardTitle className="text-2xl">{displayName}</CardTitle>
-            <CardDescription>{email}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
-                <User className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <div className="text-sm text-muted-foreground">Email</div>
-                  <div className="font-medium">{email}</div>
-                </div>
-              </div>
+      {/* ── Sticky header — matches workspace shell cadence ─────────────────── */}
+      <header className="border-b border-white/[0.06] bg-neutral-950/80 backdrop-blur-xl sticky top-0 z-10">
+        <div className="px-8 py-4 flex items-center justify-between max-w-6xl mx-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-neutral-400 hover:text-white hover:bg-white/[0.06] -ml-2"
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Return to Workspace
+          </Button>
+          <IL>Profile</IL>
+        </div>
+      </header>
 
-              <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent hover:shadow-md transition-all duration-200">
-                <CardContent className="pt-6">
-                  <XPBar 
-                    level={stats?.level || 1} 
-                    totalXP={stats?.xp_total || 0} 
-                    showDetails={true}
-                  />
-                </CardContent>
-              </Card>
+      {/* ── Two-column layout ───────────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-8 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-8 items-start">
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 rounded-lg bg-muted/50 text-center hover:bg-muted hover:scale-105 transition-all duration-200">
-                  <div className="text-2xl font-bold">{stats?.streak_current || 0}</div>
-                  <div className="text-xs text-muted-foreground mt-1">Current Streak</div>
-                </div>
-                <div className="p-4 rounded-lg bg-muted/50 text-center hover:bg-muted hover:scale-105 transition-all duration-200">
-                  <div className="text-2xl font-bold">{stats?.longest_streak || 0}</div>
-                  <div className="text-xs text-muted-foreground mt-1">Best Streak</div>
-                </div>
-                <div className="p-4 rounded-lg bg-muted/50 text-center hover:bg-muted hover:scale-105 transition-all duration-200">
-                  <Award className="w-6 h-6 mx-auto mb-1 text-primary" />
-                  <div className="text-xs text-muted-foreground">Badges</div>
-                </div>
-              </div>
+          {/* ════════════════════════════════════════════════════════════════
+              LEFT  —  Identity bento + Academic status band
+          ════════════════════════════════════════════════════════════════ */}
+          <div className="space-y-3">
 
-              <div className="p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
-                <div className="text-sm text-muted-foreground mb-2">Overall Performance</div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Questions Answered</span>
-                  <span className="text-lg font-bold">{stats?.overall_answered || 0}</span>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="font-medium">Accuracy</span>
-                  <span className="text-lg font-bold text-primary">
-                    {stats?.overall_answered && stats.overall_answered > 0 
-                      ? Math.round((stats.overall_correct || 0) / stats.overall_answered * 100)
-                      : 0}%
+            {/* Identity anchor card */}
+            <PremiumCard className="p-6">
+              <div className="flex items-start gap-4">
+                {/* Monogram avatar */}
+                <div className="w-14 h-14 rounded-xl bg-neutral-800 ring-1 ring-white/[0.06] flex items-center justify-center shrink-0">
+                  <span className="text-base font-semibold text-neutral-200 tracking-wide">
+                    {initials}
                   </span>
                 </div>
-              </div>
 
-              <div className="p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
-                <div className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Practice Settings
-                </div>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <div className="font-medium">Default Timing Mode</div>
-                    </div>
-                    <Select
-                      value={settings.defaultTimingMode}
-                      onValueChange={(value) => updateSettings({ defaultTimingMode: value as '35' | '52.5' | '70' | 'unlimited' })}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="35">35:00 - Standard</SelectItem>
-                        <SelectItem value="52.5">52:30 - 1.5× Speed</SelectItem>
-                        <SelectItem value="70">70:00 - 2× Speed</SelectItem>
-                        <SelectItem value="unlimited">Stopwatch - No Timer</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Used when selecting "Standard" timing in Full Section mode
-                    </p>
+                {/* Name + email + member since */}
+                <div className="min-w-0 flex-1 pt-0.5">
+                  <div className="text-[15px] font-medium text-white leading-snug truncate">
+                    {capitalName}
                   </div>
+                  <div className="text-xs text-neutral-500 mt-0.5 truncate">{email}</div>
+                  {memberSince && (
+                    <div className="mt-3 flex items-center gap-1.5">
+                      <IL>Since</IL>
+                      <span className="text-[10px] text-neutral-400 tracking-wide tabular-nums">
+                        {memberSince}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
+            </PremiumCard>
 
-              <div className="p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
-                <div className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Library className="h-4 w-4" />
-                  Question Pool
+            {/* Phase + Endurance — tightly interlocked smaller tiles */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Phase */}
+              <PremiumCard className="p-4">
+                <IL>Phase</IL>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-[2rem] font-light text-white tabular-nums tracking-tight leading-none">
+                    {phase.roman}
+                  </span>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">Allow Repeats</div>
-                      <div className="text-sm text-muted-foreground">Practice the same questions multiple times</div>
-                    </div>
-                    <Switch 
-                      checked={settings.allowRepeats} 
-                      onCheckedChange={(checked) => updateSettings({ allowRepeats: checked })}
-                    />
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">Prefer Unseen</div>
-                      <div className="text-sm text-muted-foreground">Prioritize questions you haven't seen yet</div>
-                    </div>
-                    <Switch 
-                      checked={settings.preferUnseen} 
-                      onCheckedChange={(checked) => updateSettings({ preferUnseen: checked })}
-                      disabled={!settings.allowRepeats}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="recycleAfterDays" className="font-medium">
-                      Recycle After Days
-                    </Label>
-                    <Input
-                      id="recycleAfterDays"
-                      type="number"
-                      min="1"
-                      max="365"
-                      value={settings.recycleAfterDays}
-                      onChange={(e) => updateSettings({ recycleAfterDays: parseInt(e.target.value) || 30 })}
-                      className="w-full"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Questions become available again after this many days
-                    </p>
-                  </div>
-
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    onClick={handleResetPool}
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Reset Question Pool
-                  </Button>
+                <div className="text-[11px] text-neutral-500 mt-1.5 leading-snug">
+                  {phase.label}
                 </div>
-              </div>
+              </PremiumCard>
 
-              <div className="p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors duration-200">
-                <div className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  AI Features
+              {/* Endurance */}
+              <PremiumCard className="p-4">
+                <IL>Endurance</IL>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-[2rem] font-light text-white tabular-nums tracking-tight leading-none">
+                    {endurance}
+                  </span>
+                  <span className="text-[11px] text-neutral-500 mb-0.5">days</span>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">AI Tutor "Joshua"</div>
-                      <div className="text-sm text-muted-foreground">Enable real-time tutoring assistance</div>
-                    </div>
-                    <Switch 
-                      checked={settings.tutorEnabled} 
-                      onCheckedChange={(checked) => updateSettings({ tutorEnabled: checked })}
-                    />
-                  </div>
-
-                  <div className="pt-3 border-t border-border/50">
-                    <div className="flex justify-between items-center mb-3">
-                      <div>
-                        <div className="font-medium">Voice Coach</div>
-                        <div className="text-sm text-muted-foreground">Speak your reasoning, get targeted feedback</div>
-                      </div>
-                      <Switch 
-                        checked={settings.voiceCoachEnabled} 
-                        onCheckedChange={(checked) => updateSettings({ voiceCoachEnabled: checked })}
-                      />
-                    </div>
-
-                    {settings.voiceCoachEnabled && (
-                      <div className="ml-4 space-y-3 mt-3 pt-3 border-t border-border/30">
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm text-muted-foreground">Show answer contrast</div>
-                          <Switch 
-                            checked={settings.showContrast} 
-                            onCheckedChange={(checked) => updateSettings({ showContrast: checked })}
-                          />
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm text-muted-foreground">Teach-back on correct</div>
-                          <Switch 
-                            checked={settings.teachBackOnCorrect} 
-                            onCheckedChange={(checked) => updateSettings({ teachBackOnCorrect: checked })}
-                          />
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm text-muted-foreground">Section debrief</div>
-                          <Switch 
-                            checked={settings.sectionDebriefEnabled} 
-                            onCheckedChange={(checked) => updateSettings({ sectionDebriefEnabled: checked })}
-                          />
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm text-muted-foreground">Store full transcripts</div>
-                          <Switch 
-                            checked={settings.storeFullTranscript} 
-                            onCheckedChange={(checked) => updateSettings({ storeFullTranscript: checked })}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                <div className="text-[11px] text-neutral-500 mt-1.5 leading-snug">
+                  Peak&nbsp;&nbsp;{bestEndurance}
                 </div>
-              </div>
-
-              {memberSince && (
-                <div className="text-center text-sm text-muted-foreground">
-                  Member since {new Date(memberSince).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </div>
-              )}
+              </PremiumCard>
             </div>
 
-            <Button
-              variant="destructive"
-              onClick={handleSignOut}
-              className="w-full"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </Button>
-          </CardContent>
-        </Card>
+            {/* Academic status band */}
+            <PremiumCard className="p-5">
+              {/* Phase progression label + position */}
+              <div className="flex items-center justify-between mb-3">
+                <IL>Phase progression</IL>
+                <span className="text-[10px] text-neutral-400 tabular-nums tracking-wide">
+                  {phase.roman}&thinsp;of&thinsp;V
+                </span>
+              </div>
 
-        <div className="mt-8">
-          <BadgeGallery />
+              {/* Thin razor track */}
+              <div className="relative h-px w-full bg-neutral-800 rounded-full overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 bg-neutral-400 rounded-full"
+                  style={{
+                    width: `${progress.percentage}%`,
+                    transition: 'width 0.9s cubic-bezier(0.16,1,0.3,1)',
+                  }}
+                />
+              </div>
+
+              {/* Three instrument readouts */}
+              <div className="mt-4 grid grid-cols-3 divide-x divide-neutral-800/60">
+                <div className="pr-4">
+                  <IL>Volume Logged</IL>
+                  <div className="text-[13px] font-medium text-neutral-200 tabular-nums mt-1.5">
+                    {volumeLogged.toLocaleString()}
+                  </div>
+                </div>
+                <div className="px-4">
+                  <IL>Accuracy</IL>
+                  <div className="text-[13px] font-medium text-neutral-200 tabular-nums mt-1.5">
+                    {accuracy}%
+                  </div>
+                </div>
+                <div className="pl-4">
+                  <IL>Phase&nbsp;%</IL>
+                  <div className="text-[13px] font-medium text-neutral-200 tabular-nums mt-1.5">
+                    {Math.round(progress.percentage)}%
+                  </div>
+                </div>
+              </div>
+            </PremiumCard>
+
+          </div>
+
+          {/* ════════════════════════════════════════════════════════════════
+              RIGHT  —  Settings + Account controls
+          ════════════════════════════════════════════════════════════════ */}
+          <div className="space-y-4">
+
+            {/* Practice Settings ─────────────────────────────────────────── */}
+            <PremiumCard className="p-5">
+              <SectionHead icon={Clock} title="Practice Settings" />
+
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-neutral-500 font-normal">
+                  Default Timing Mode
+                </Label>
+                <Select
+                  value={settings.defaultTimingMode}
+                  onValueChange={(value) =>
+                    updateSettings({
+                      defaultTimingMode: value as '35' | '52.5' | '70' | 'unlimited',
+                    })
+                  }
+                >
+                  <SelectTrigger className="w-full bg-neutral-800 border-neutral-700/80 text-neutral-200 text-[13px] h-9 focus:ring-0 focus:ring-offset-0 mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-neutral-900 border-neutral-700/80 text-neutral-200">
+                    <SelectItem value="35"        className="text-[13px] focus:bg-neutral-800 focus:text-white">35:00 — Standard</SelectItem>
+                    <SelectItem value="52.5"      className="text-[13px] focus:bg-neutral-800 focus:text-white">52:30 — 1.5× Accommodation</SelectItem>
+                    <SelectItem value="70"        className="text-[13px] focus:bg-neutral-800 focus:text-white">70:00 — 2× Accommodation</SelectItem>
+                    <SelectItem value="unlimited" className="text-[13px] focus:bg-neutral-800 focus:text-white">Stopwatch — No Timer</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-neutral-600 mt-1.5 leading-snug">
+                  Applied when starting Full Section mode with Standard timing.
+                </p>
+              </div>
+            </PremiumCard>
+
+            {/* Question Pool ─────────────────────────────────────────────── */}
+            <PremiumCard className="p-5">
+              <SectionHead icon={Library} title="Question Pool" />
+
+              <div className="divide-y divide-neutral-800/60">
+                <ToggleRow
+                  label="Allow Repeats"
+                  description="Practice the same questions across sessions"
+                  checked={settings.allowRepeats}
+                  onCheckedChange={(v) => updateSettings({ allowRepeats: v })}
+                />
+                <ToggleRow
+                  label="Prefer Unseen"
+                  description="Prioritise questions not yet encountered"
+                  checked={settings.preferUnseen}
+                  onCheckedChange={(v) => updateSettings({ preferUnseen: v })}
+                  disabled={!settings.allowRepeats}
+                />
+                <div className="py-3 space-y-2">
+                  <Label className="text-[11px] text-neutral-500 font-normal">
+                    Recycle After Days
+                  </Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={settings.recycleAfterDays}
+                    onChange={(e) =>
+                      updateSettings({ recycleAfterDays: parseInt(e.target.value) || 30 })
+                    }
+                    className="bg-neutral-800 border-neutral-700/80 text-neutral-200 text-[13px] h-9 w-28 focus:ring-0 focus:ring-offset-0"
+                  />
+                  <p className="text-[11px] text-neutral-600 leading-snug">
+                    Questions re-enter the pool after this many days.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-2 pt-3 border-t border-neutral-800/60">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetPool}
+                  className="gap-2 text-neutral-500 hover:text-neutral-200 hover:bg-white/[0.05] text-[11px] h-8 px-3"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Reset Question Pool
+                </Button>
+              </div>
+            </PremiumCard>
+
+            {/* AI Features ───────────────────────────────────────────────── */}
+            <PremiumCard className="p-5">
+              <SectionHead icon={Bot} title="AI Features" />
+
+              <div className="divide-y divide-neutral-800/60">
+                <ToggleRow
+                  label="AI Tutor"
+                  description="Real-time reasoning assistance during practice"
+                  checked={settings.tutorEnabled}
+                  onCheckedChange={(v) => updateSettings({ tutorEnabled: v })}
+                />
+                <ToggleRow
+                  label="Voice Coach"
+                  description="Speak your reasoning aloud for targeted feedback"
+                  checked={settings.voiceCoachEnabled}
+                  onCheckedChange={(v) => updateSettings({ voiceCoachEnabled: v })}
+                />
+                {settings.voiceCoachEnabled && (
+                  <div className="pt-2 pb-1 pl-3 border-l border-neutral-700/50 ml-0.5 divide-y divide-neutral-800/40">
+                    <ToggleRow
+                      label="Show answer contrast"
+                      checked={settings.showContrast}
+                      onCheckedChange={(v) => updateSettings({ showContrast: v })}
+                      indent
+                    />
+                    <ToggleRow
+                      label="Teach-back on correct"
+                      checked={settings.teachBackOnCorrect}
+                      onCheckedChange={(v) => updateSettings({ teachBackOnCorrect: v })}
+                      indent
+                    />
+                    <ToggleRow
+                      label="Section debrief"
+                      checked={settings.sectionDebriefEnabled}
+                      onCheckedChange={(v) => updateSettings({ sectionDebriefEnabled: v })}
+                      indent
+                    />
+                    <ToggleRow
+                      label="Store full transcripts"
+                      checked={settings.storeFullTranscript}
+                      onCheckedChange={(v) => updateSettings({ storeFullTranscript: v })}
+                      indent
+                    />
+                  </div>
+                )}
+              </div>
+            </PremiumCard>
+
+            {/* Account ────────────────────────────────────────────────────── */}
+            {/* Intentionally un-carded — low visual weight, pure utility */}
+            <div className="flex items-center justify-between px-1 pt-1">
+              <IL>Account</IL>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="gap-2 text-neutral-600 hover:text-neutral-300 hover:bg-white/[0.04] text-[11px] h-8 px-3"
+              >
+                <LogOut className="h-3 w-3" />
+                Sign Out
+              </Button>
+            </div>
+
+          </div>
         </div>
       </div>
+
     </div>
   );
 }

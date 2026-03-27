@@ -100,7 +100,7 @@ export default function FlaggedQuestions() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/')}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
@@ -128,7 +128,7 @@ export default function FlaggedQuestions() {
             <p className="text-muted-foreground mb-6">
               Questions you flag during practice will appear here for easy review.
             </p>
-            <Button onClick={() => navigate('/dashboard')}>
+            <Button onClick={() => navigate('/')}>
               Start Practicing
             </Button>
           </Card>
