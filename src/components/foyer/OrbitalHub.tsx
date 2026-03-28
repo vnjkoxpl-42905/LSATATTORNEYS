@@ -315,14 +315,14 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
               {/* ── Label ── */}
               <div style={labelStyle(nodeAnchor)}>
                 <div
-                  className="text-[9px] uppercase font-medium"
+                  className="text-[9px] uppercase font-semibold"
                   style={{
                     letterSpacing: "0.22em",
                     color: isHov
-                      ? `rgba(${nodeC},0.88)`
+                      ? `rgba(${nodeC},0.95)`
                       : node.charge > 0.5
-                      ? `rgba(${nodeC},${0.28 + node.charge * 0.22})`
-                      : `rgba(${nodeC},0.22)`,
+                      ? `rgba(${nodeC},${0.52 + node.charge * 0.22})`
+                      : `rgba(${nodeC},0.48)`,
                     transition: "color 0.3s",
                   }}
                 >
@@ -363,14 +363,14 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
             {hoveredNode ? (
               <>
                 <div
-                  className="uppercase font-medium mb-1.5"
-                  style={{ fontSize: 8, letterSpacing: "0.28em", color: `rgba(${nodeC},0.55)` }}
+                  className="uppercase font-semibold mb-1.5"
+                  style={{ fontSize: 8, letterSpacing: "0.28em", color: `rgba(${nodeC},0.72)` }}
                 >
                   {hoveredNode.label}
                 </div>
                 <div
                   className="leading-relaxed"
-                  style={{ fontSize: 9, color: `rgba(${nodeC},0.27)` }}
+                  style={{ fontSize: 9, color: `rgba(${nodeC},0.45)` }}
                 >
                   {hoveredNode.description}
                 </div>
@@ -389,8 +389,8 @@ export default function OrbitalHub({ phase, selectedNodeId, onSelectNode }: Orbi
               </>
             ) : (
               <div
-                className="uppercase"
-                style={{ fontSize: 8, letterSpacing: "0.42em", color: `rgba(${nodeC},0.09)` }}
+                className="uppercase font-semibold"
+                style={{ fontSize: 8, letterSpacing: "0.42em", color: `rgba(${nodeC},0.28)` }}
               >
                 LSAT U
               </div>

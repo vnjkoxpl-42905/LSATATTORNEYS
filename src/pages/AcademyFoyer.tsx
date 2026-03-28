@@ -93,8 +93,8 @@ export default function AcademyFoyer() {
   if (authLoading || !user) return null;
 
   // Theme-adaptive colors
-  const brandColor   = isLight ? "rgba(0,0,0,0.12)"     : "rgba(255,255,255,0.09)";
-  const promptColor  = isLight ? "rgba(0,0,0,0.10)"     : "rgba(255,255,255,0.09)";
+  const brandColor   = isLight ? "rgba(0,0,0,0.38)"     : "rgba(255,255,255,0.22)";
+  const promptColor  = isLight ? "rgba(0,0,0,0.32)"     : "rgba(255,255,255,0.18)";
   const dissolveGrad = isLight
     ? "radial-gradient(ellipse 60% 60% at 50% 50%, transparent 20%, rgba(255,255,255,0.7) 80%, #fff 100%)"
     : "radial-gradient(ellipse 60% 60% at 50% 50%, transparent 20%, rgba(0,0,0,0.7) 80%, #000 100%)";
@@ -110,7 +110,7 @@ export default function AcademyFoyer() {
       {/* ── LSAT U wordmark — ultra-faint brand anchor ── */}
       <div className="absolute top-8 inset-x-0 flex justify-center z-30 pointer-events-none">
         <span
-          className="uppercase font-medium select-none"
+          className="uppercase font-semibold select-none"
           style={{ fontSize: 9, letterSpacing: "0.42em", color: brandColor }}
         >
           LSAT U
@@ -139,7 +139,7 @@ export default function AcademyFoyer() {
             transition={{ duration: 1, delay: 0.4 }}
           >
             <span
-              className="uppercase select-none"
+              className="uppercase font-semibold select-none"
               style={{ fontSize: 8, letterSpacing: "0.38em", color: promptColor }}
             >
               Select a module

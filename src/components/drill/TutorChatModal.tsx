@@ -244,7 +244,7 @@ export function TutorChatModal({
         <div className="mt-2 px-1">
           <button
             onClick={onClose}
-            className="text-[10px] text-neutral-600 hover:text-neutral-400 transition-colors duration-150 select-none"
+            className="w-full py-2.5 rounded-lg bg-white text-neutral-900 text-[13px] font-semibold hover:bg-neutral-100 active:bg-neutral-200 transition-colors duration-150 select-none"
           >
             Return to question →
           </button>

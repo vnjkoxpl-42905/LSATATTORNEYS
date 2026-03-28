@@ -211,9 +211,10 @@ function DrillContent() {
       
       if (classId) {
         const usage = await QuestionPoolService.getQuestionUsage(classId, mode);
+        const typeDrillConfig = mode === 'type-drill' ? (state.config as TypeDrillConfig) : null;
         const poolSettings = {
-          allowRepeats: settings.allowRepeats,
-          preferUnseen: settings.preferUnseen,
+          allowRepeats: typeDrillConfig?.unseen_only ? false : settings.allowRepeats,
+          preferUnseen: typeDrillConfig?.unseen_only ? true : settings.preferUnseen,
           recycleAfterDays: settings.recycleAfterDays
         };
         
@@ -1696,7 +1697,7 @@ function DrillContent() {
       )}>
         {/* Pause Overlay */}
         {timer?.isPaused && (
-          <div className="absolute inset-0 bg-background/90 backdrop-blur-md z-50 flex items-center justify-center animate-fade-in">
+          <div className="absolute inset-0 bg-zinc-900/90 backdrop-blur-md z-50 flex items-center justify-center animate-fade-in">
             <Card className="p-10 text-center shadow-lg border-border/50 rounded-lg">
               <h2 className="text-2xl font-semibold mb-3 text-foreground">Timer Paused</h2>
               <p className="text-muted-foreground mb-6">Click Resume to continue</p>
@@ -1709,7 +1710,7 @@ function DrillContent() {
         )}
 
         {/* Header - Clean and minimal */}
-        <div className="px-4 sm:px-8 py-3 sm:py-4 border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-40">
+        <div className="px-4 sm:px-8 py-3 sm:py-4 border-b border-white/[0.06] bg-zinc-900/95 backdrop-blur-sm sticky top-0 z-40">
           <div className="flex items-center justify-between max-w-[1800px] mx-auto">
             <Button
               variant="ghost"
@@ -1798,7 +1799,7 @@ function DrillContent() {
         </div>
 
       {/* Compact toolbar - Available for all modes */}
-      <div className="px-4 sm:px-8 py-2 border-b border-border/50 bg-background/60">
+      <div className="px-4 sm:px-8 py-2 border-b border-white/[0.06] bg-zinc-900/80">
         <div className="flex items-center justify-end max-w-[1800px] mx-auto">
           <HighlightToolbar 
             mode={highlightMode} 
@@ -2042,7 +2043,7 @@ function DrillContent() {
 
       {/* Sticky Bottom Navigation Bar - Section & Practice-Set Modes */}
       {(session.mode === 'full-section' || isPracticeSetMode) && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background/98 backdrop-blur-sm border-t border-border shadow-lg z-50 animate-slide-up">
+        <div className="fixed bottom-0 left-0 right-0 bg-zinc-900/98 backdrop-blur-sm border-t border-white/[0.06] shadow-lg z-50 animate-slide-up">
           <div className="px-6 py-3 flex items-center justify-between gap-6 max-w-[1800px] mx-auto">
             {/* Previous Button */}
             <Button

@@ -75,6 +75,7 @@ export function NaturalDrillCreator({ onStartDrill, onCancel }: NaturalDrillCrea
         difficulties: data.difficulties,
         pts: data.pts,
         count: data.set_size,
+        unseen_only: data.unseen_only ?? false,
       });
 
     } catch (err) {

@@ -167,16 +167,6 @@ serve(async (req) => {
     // Get coaching knowledge from database
     const knowledge = await getCoachingKnowledge(supabase, question);
 
-    // Detect conversation phase
-    let phase: 1 | 2 | 3;
-    if (messages.length === 0) {
-      phase = 1; // Initial Socratic question
-    } else if (messages.length === 2) {
-      phase = 2; // Reveal + 3-bullet coaching
-    } else {
-      phase = 3; // Conversational follow-up
-    }
-
     // Prepare concise inputs to avoid token limits
     const clamp = (s: string | null | undefined, n: number) => {
       if (!s) return '';
@@ -186,38 +176,12 @@ serve(async (req) => {
     const stimulusShort = clamp(question.stimulus, 2000);
     const stemShort = clamp(question.questionStem, 600);
 
-
-    // Gate phases >= 2 behind auth + prior attempt (only if user is authenticated)
-    // UPDATE: Do not hard-block coaching if no attempt is found. Some classes don't log
-    // attempts per-user. We'll try to detect an attempt but fall back to allowing coaching
-    // so users can always proceed.
-    if (phase >= 2 && user && supabaseClient) {
-      try {
-        const { data: attempt, error: attemptErr } = await supabaseClient
-          .from('attempts')
-          .select('id')
-          .eq('qid', question.qid)
-          .limit(1)
-          .maybeSingle();
-
-        // If the query explicitly says "no rows" or returns null, we still allow coaching.
-        // We only block on unexpected auth errors in the future if needed.
-        if (attemptErr) {
-          console.warn('Attempt lookup failed, proceeding without gating:', attemptErr);
-        }
-        // No 403 here anymore — proceed regardless.
-      } catch (err) {
-        console.warn('Attempt lookup exception, proceeding without gating:', err);
-      }
-    }
-
     // Log coaching session to database (only if we have a user)
     if (user && supabaseClient) {
       supabaseClient.from('events').insert({
         user_id: user.id,
         event_type: 'coaching_request',
-        metadata: { 
-          phase, 
+        metadata: {
           message_count: messages.length,
           qid: question.qid
         }
@@ -225,18 +189,11 @@ serve(async (req) => {
     }
 
     // Build context strings
-    const answerChoicesText = Object.entries(question.answerChoices)
-      .map(([key, text]) => `(${key}) ${text}`)
-      .join('\n');
-
     const chosenAnswerText = question.answerChoices?.[question.userAnswer] || '';
-    const correctAnswerText = question.answerChoices?.[question.correctAnswer] || '';
 
-    // Extract per-answer explanations for targeted coaching
+    // Extract why the student's chosen answer is wrong (for coaching only)
     const wrongExpl = question.answerChoiceExplanations?.[question.userAnswer];
-    const correctExpl = question.answerChoiceExplanations?.[question.correctAnswer];
     const whyWrong = wrongExpl?.whyIncorrect || '';
-    const whyCorrect = correctExpl?.whyCorrect || '';
 
     const breakdownText = question.breakdown
       ? `**Breakdown:**
@@ -249,17 +206,9 @@ serve(async (req) => {
 - Crucial insight: ${question.breakdown.crucialInsight}`
       : '';
 
-    const explanationsText = question.answerChoiceExplanations
-      ? Object.entries(question.answerChoiceExplanations)
-          .map(([key, exp]: [string, any]) => {
-            return `(${key}) ${exp.verdict === 'correct' ? exp.whyCorrect : exp.whyIncorrect}`;
-          })
-          .join('\n')
-      : '';
-
     // Build knowledge base context
     let knowledgeContext = '';
-    
+
     if (knowledge.strategy) {
       knowledgeContext += `\n**QUESTION TYPE STRATEGY (${question.qtype}):**
 - Reading Strategy: ${knowledge.strategy.reading_strategy}
@@ -298,32 +247,28 @@ ${knowledge.concepts.map((c: any) => `- ${c.concept_name}: ${c.explanation}
 
     // Truncate heavy sections to stay within model limits
     const breakdownTextShort = clamp(breakdownText, 1500);
-    const explanationsTextShort = clamp(explanationsText, 3000);
     const knowledgeContextShort = clamp(knowledgeContext, 4000);
 
     // Only send the last few turns to the model
     const messagesForModel = (messages || []).slice(-6);
 
+    const isFirstMessage = messages.length === 0;
 
-    // Build system prompt based on phase
-    const answersSection = phase === 1
-      ? `- Student picked (${question.userAnswer}): "${clamp(chosenAnswerText, 300)}"\n- Correct answer is (${question.correctAnswer}) [DO NOT reveal yet]`
-      : `- All Answer Choices:\n${answerChoicesText}`;
-
+    // Build unified Socratic system prompt — NEVER reveals the correct answer
     let systemPrompt = `You are Joshua, a sharp, no-nonsense LSAT tutor. You sound like a smart friend who happens to be very good at the LSAT. You are concise, direct, and specific. You never hedge or pad. You never use em-dashes. You never cite sources or say things like "the stimulus states" or "the argument exhibits." You talk like a real person.
 
 QUESTION CONTEXT:
 - Type: ${question.qtype}${question.reasoningType ? ` (${question.reasoningType})` : ''}
 - Stimulus: ${stimulusShort || 'N/A'}
 - Stem: ${stemShort}
-${answersSection}
+- Student picked (${question.userAnswer}): "${clamp(chosenAnswerText, 300)}"
 ${breakdownTextShort ? `\nARGUMENT BREAKDOWN:\n${breakdownTextShort}` : ''}
 ${knowledgeContextShort ? `\nCOACHING KNOWLEDGE:\n${knowledgeContextShort}` : ''}
 
 `;
 
-    if (phase === 1) {
-      // Phase 1: targeted wrong-answer coaching WITHOUT revealing the correct answer
+    if (isFirstMessage) {
+      // First message: targeted wrong-answer coaching
       systemPrompt += `YOUR TASK: Explain why (${question.userAnswer}) is wrong. Be specific to THIS answer on THIS question.
 
 THE STUDENT PICKED (${question.userAnswer}): "${clamp(chosenAnswerText, 400)}"
@@ -334,42 +279,40 @@ INSTRUCTIONS:
 1. Name the specific phrase or idea in (${question.userAnswer}) that makes it tempting.
 2. Explain exactly why it doesn't hold up, referencing the stimulus. Be concrete: quote a few key words from the answer or stimulus.
 3. Nudge toward what they should look for instead, without naming the correct answer letter or its content.
-4. 2-3 short, punchy sentences. Plain English. No jargon, no academic tone.
-5. Do NOT ask the student questions. Do NOT reveal the correct answer.
+4. End by encouraging them to return to the question and try again.
+5. 2-3 short, punchy sentences. Plain English. No jargon, no academic tone.
 
-GOOD EXAMPLE: "(B) is tempting because it sounds like the author is questioning the method, but look at the last sentence: the author says the results 'clearly demonstrate' it works. The issue with (B) is that it gets the author's attitude backwards. Look for an answer that matches what the author actually concludes, not what you'd expect them to say."
+GOOD EXAMPLE: "(B) is tempting because it sounds like the author is questioning the method, but look at the last sentence: the author says the results 'clearly demonstrate' it works. The issue with (B) is that it gets the author's attitude backwards. Look for an answer that matches what the author actually concludes, not what you'd expect them to say. Go back and give it another shot."
 
 BAD EXAMPLE (too generic): "This answer doesn't align with the argument's main point. The reasoning doesn't support this conclusion."`;
-    } else if (phase === 2) {
-      // Phase 2: reveal correct answer + 3 targeted bullets
-      systemPrompt += `YOUR TASK: Reveal that (${question.correctAnswer}) is correct and give exactly 3 coaching bullets.
-
-STUDENT PICKED (${question.userAnswer}): "${clamp(chosenAnswerText, 300)}"
-CORRECT ANSWER (${question.correctAnswer}): "${clamp(correctAnswerText, 300)}"
-${whyWrong ? `\nWHY (${question.userAnswer}) IS WRONG: ${whyWrong}` : ''}
-${whyCorrect ? `\nWHY (${question.correctAnswer}) IS RIGHT: ${whyCorrect}` : ''}
-
-FORMAT (use these exact bold headers):
-
-**Why (${question.userAnswer}) is wrong:** [Name the specific trap. Quote the key phrase that's misleading and say why it fails in one sentence.]
-
-**Why (${question.correctAnswer}) is right:** [Point to the specific feature that makes it work. Connect it to the stimulus in one sentence.]
-
-**Next time:** [One concrete, reusable tactic for this question type. Make it actionable, not abstract.]`;
     } else {
-      // Phase 3: conversational follow-up
-      systemPrompt += `YOUR TASK: Answer the student's follow-up question.
+      // Follow-up messages: answer student's questions, keep coaching
+      systemPrompt += `YOUR TASK: Answer the student's follow-up question. Help them think through the problem.
 
-FULL ANSWER KEY:
-${explanationsTextShort}
+THE STUDENT ORIGINALLY PICKED (${question.userAnswer}): "${clamp(chosenAnswerText, 300)}"
+${whyWrong ? `\nWHY (${question.userAnswer}) IS WRONG:\n${whyWrong}` : ''}
 
 RULES:
-- Stay specific to this question. Quote from the stimulus and answers.
+- Stay specific to this question. Quote from the stimulus and answers when helpful.
 - 2-3 sentences unless they ask for a deeper concept explanation.
-- If they ask about a wrong answer you haven't discussed, explain its specific trap.
+- If they ask about a specific wrong answer, explain why that particular answer doesn't work.
 - If they ask about strategy, draw from the coaching knowledge above.
+- If they seem stuck, give a nudge about what to look for — but never name the correct answer.
+- Encourage them to return to the question and try again.
 - Sound like a sharp tutor, not a chatbot.`;
     }
+
+    // ABSOLUTE CONSTRAINTS — appended to every prompt
+    systemPrompt += `
+
+ABSOLUTE RULES — NEVER VIOLATE THESE:
+1. NEVER reveal the correct answer letter. NEVER say which answer is correct.
+2. NEVER confirm or deny if a specific answer choice is the correct one.
+3. NEVER explain why the correct answer is correct. NEVER contrast the wrong answer with the correct answer.
+4. NEVER list or explain answer choices the student has not specifically asked about.
+5. If the student asks "what is the correct answer?" or "is it (X)?", say: "I can't give that away — go back and try again. You've got this."
+6. Your job is to help them THINK, not to give them the answer. Guide their reasoning, point out flaws in their logic, and nudge them toward the right approach.
+7. Always encourage the student to return to the question and attempt it again.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

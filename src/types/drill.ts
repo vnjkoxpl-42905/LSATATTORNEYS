@@ -26,6 +26,7 @@ export interface TypeDrillConfig {
   pts: number[];
   count: number; // number of questions to drill
   selectedQids?: string[]; // optional pre-selected question IDs
+  unseen_only?: boolean; // if true, force unseen-only filtering regardless of user's global setting
 }
 
 export interface DrillSession {
