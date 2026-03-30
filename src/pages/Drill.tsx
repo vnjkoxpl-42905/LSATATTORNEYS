@@ -68,6 +68,16 @@ function DrillContent() {
     if (!user) navigate('/auth');
   }, [user, navigate]);
 
+  // ── Force dark mode: drilling pages always use the dark reading surface ──
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const wasLight = root.classList.contains('light');
+    root.classList.remove('light');
+    return () => {
+      if (wasLight) root.classList.add('light');
+    };
+  }, []);
+
   const [session, setSession] = React.useState<DrillSession | null>(null);
   const [currentQuestion, setCurrentQuestion] = React.useState<LRQuestion | null>(null);
   const [selectedAnswer, setSelectedAnswer] = React.useState<string>('');
@@ -89,7 +99,7 @@ function DrillContent() {
   const [highlightHistory, setHighlightHistory] = React.useState<Map<string, Highlight[]>[]>([]);
   const [isFlagged, setIsFlagged] = React.useState(false);
   const [showExitDialog, setShowExitDialog] = React.useState(false);
-  const [exitDestination, setExitDestination] = React.useState<'/' | '/dashboard'>('/');
+  const [exitDestination, setExitDestination] = React.useState<string>('/');
   const [tutorMode, setTutorMode] = React.useState(true);
   const [brMarked, setBrMarked] = React.useState<Set<string>>(new Set());
   const [showBRSelection, setShowBRSelection] = React.useState(false);
@@ -140,21 +150,22 @@ function DrillContent() {
       if (student?.class_id) {
         setClassId(student.class_id);
       } else {
-        console.error('No student record found for user:', user.id);
-        // Only show this error after the fetch has definitively returned nothing —
-        // not during the async gap before it resolves.
-        toast.error('Session error: no class found for your account. Please contact your instructor.');
+        // No student row yet — the AuthContext provisioner may still be running.
+        // Fall back to the auth UUID so answers are never silently dropped.
+        console.warn('No student record found for user, falling back to user.id as class_id:', user.id);
+        setClassId(user.id);
       }
       setClassIdLoading(false);
     };
 
     fetchClassId();
-  }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // depend on stable ID, not the whole user object reference
 
   // Initialize session with question pool filtering
   React.useEffect(() => {
     if (!state?.mode) {
-      navigate('/');
+      navigate('/foyer');
       return;
     }
 
@@ -201,9 +212,10 @@ function DrillContent() {
       
       if (classId) {
         const usage = await QuestionPoolService.getQuestionUsage(classId, mode);
+        const typeDrillConfig = mode === 'type-drill' ? (state.config as TypeDrillConfig) : null;
         const poolSettings = {
-          allowRepeats: settings.allowRepeats,
-          preferUnseen: settings.preferUnseen,
+          allowRepeats: typeDrillConfig?.unseen_only ? false : settings.allowRepeats,
+          preferUnseen: typeDrillConfig?.unseen_only ? true : settings.preferUnseen,
           recycleAfterDays: settings.recycleAfterDays
         };
         
@@ -490,14 +502,19 @@ function DrillContent() {
     if (!question) return;
     
     try {
-      if (!classId) {
-        console.error('Cannot save attempt: missing class_id');
-        toast.error('Session error: missing class ID. Your answer was not saved.');
+      if (!classId && classIdLoading) {
+        // Still resolving — retry once the ID is available via the effect
+        console.warn('saveAttemptToDatabase called before classId resolved, skipping');
+        return;
+      }
+      const resolvedClassId = classId || user?.id || '';
+      if (!resolvedClassId) {
+        console.error('Cannot save attempt: no class_id and no user.id available');
         return;
       }
       const { error } = await (supabase as any).from('attempts').insert({
         user_id: user?.id,
-        class_id: classId,
+        class_id: resolvedClassId,
         qid: attemptData.qid,
         pt: question.pt,
         section: question.section,
@@ -1226,7 +1243,7 @@ function DrillContent() {
     }
   };
 
-  const handleNavigation = (destination: '/' | '/dashboard') => {
+  const handleNavigation = (destination: '/' | '/foyer' | '/dashboard') => {
     setExitDestination(destination);
     setShowExitDialog(true);
   };
@@ -1317,11 +1334,11 @@ function DrillContent() {
             setAutoReviewQids(session.questionQueue);
             setPostSectionScreen('review');
           }}
-          onBack={() => navigate('/')}
+          onBack={() => navigate('/foyer')}
         />
       );
     }
-    
+
     // Use new LR Section Results for full-section mode
     if (session.mode === 'full-section') {
       return (
@@ -1329,11 +1346,11 @@ function DrillContent() {
           session={session}
           brResults={brResults}
           classId={classId}
-          onBack={() => navigate('/')}
+          onBack={() => navigate('/foyer')}
         />
       );
     }
-    
+
     // Fall back to old ScoreReport for other modes
     return (
       <ScoreReport
@@ -1343,7 +1360,7 @@ function DrillContent() {
           setAutoReviewQids(session.questionQueue);
           setPostSectionScreen('review');
         }}
-        onBack={() => navigate('/')}
+        onBack={() => navigate('/foyer')}
       />
     );
   }
@@ -1374,7 +1391,7 @@ function DrillContent() {
             setShowBRFlow(true);
           }}
           onSkip={() => {
-            navigate('/');
+            navigate('/foyer');
           }}
         />
       );
@@ -1404,7 +1421,7 @@ function DrillContent() {
         <BlindReviewResults
           session={session!}
           results={brResults}
-          onFinish={() => navigate('/')}
+          onFinish={() => navigate('/foyer')}
         />
       );
     }
@@ -1426,11 +1443,8 @@ function DrillContent() {
             )}
           </p>
           <div className="flex gap-3">
-            <Button onClick={() => navigate('/')}>
-              Return Home
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/dashboard')}>
-              View Dashboard
+            <Button onClick={() => navigate('/foyer')}>
+              Return to Main Hub
             </Button>
           </div>
         </Card>
@@ -1686,7 +1700,7 @@ function DrillContent() {
       )}>
         {/* Pause Overlay */}
         {timer?.isPaused && (
-          <div className="absolute inset-0 bg-background/90 backdrop-blur-md z-50 flex items-center justify-center animate-fade-in">
+          <div className="absolute inset-0 bg-zinc-900/90 backdrop-blur-md z-50 flex items-center justify-center animate-fade-in">
             <Card className="p-10 text-center shadow-lg border-border/50 rounded-lg">
               <h2 className="text-2xl font-semibold mb-3 text-foreground">Timer Paused</h2>
               <p className="text-muted-foreground mb-6">Click Resume to continue</p>
@@ -1699,12 +1713,12 @@ function DrillContent() {
         )}
 
         {/* Header - Clean and minimal */}
-        <div className="px-4 sm:px-8 py-3 sm:py-4 border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-40">
-          <div className="flex items-center justify-between max-w-[1800px] mx-auto">
+        <div className="border-b border-white/[0.06] bg-zinc-900/95 backdrop-blur-sm sticky top-0 z-40">
+          <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-4 lg:px-8 py-3 sm:py-4">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleNavigation('/')}
+              onClick={() => handleNavigation('/foyer')}
               className="text-muted-foreground hover:text-foreground min-h-[40px]"
             >
               <ArrowLeft className="w-4 h-4 mr-1 sm:mr-2" />
@@ -1788,8 +1802,8 @@ function DrillContent() {
         </div>
 
       {/* Compact toolbar - Available for all modes */}
-      <div className="px-4 sm:px-8 py-2 border-b border-border/50 bg-background/60">
-        <div className="flex items-center justify-end max-w-[1800px] mx-auto">
+      <div className="border-b border-white/[0.06] bg-zinc-900/80">
+        <div className="flex items-center justify-end w-full max-w-7xl mx-auto px-4 lg:px-8 py-2">
           <HighlightToolbar 
             mode={highlightMode} 
             onModeChange={setHighlightMode}
@@ -1802,7 +1816,7 @@ function DrillContent() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden w-full max-w-7xl mx-auto">
         {poolExhausted ? (
           <div className="flex-1 overflow-y-auto p-8">
             <QuestionPoolExhausted
@@ -2032,8 +2046,8 @@ function DrillContent() {
 
       {/* Sticky Bottom Navigation Bar - Section & Practice-Set Modes */}
       {(session.mode === 'full-section' || isPracticeSetMode) && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background/98 backdrop-blur-sm border-t border-border shadow-lg z-50 animate-slide-up">
-          <div className="px-6 py-3 flex items-center justify-between gap-6 max-w-[1800px] mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 bg-zinc-900/98 backdrop-blur-sm border-t border-white/[0.06] shadow-lg z-50 animate-slide-up">
+          <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-3 flex items-center justify-between gap-6">
             {/* Previous Button */}
             <Button
               variant="ghost"

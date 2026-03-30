@@ -4,8 +4,9 @@
     {
       "name": "Vite Dev Server",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--port", "8080"],
-      "port": 8080
+      "runtimeArgs": ["vite"],
+      "port": 8080,
+      "autoPort": true
     }
   ]
 }

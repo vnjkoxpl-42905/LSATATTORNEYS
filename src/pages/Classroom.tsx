@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, ClipboardList, RotateCcw, Flag, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoutButton } from '@/components/LogoutButton';
 import {
   MOCK_ASSIGNMENTS,
   MOCK_MATERIALS,
@@ -19,7 +21,7 @@ import {
 
 function IL({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium select-none">
+    <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium select-none">
       {children}
     </span>
   );
@@ -27,7 +29,7 @@ function IL({ children }: { children: React.ReactNode }) {
 
 function StatusBadge({ status }: { status: AssignmentStatus }) {
   const styles: Record<AssignmentStatus, string> = {
-    assigned:        'bg-neutral-800 text-neutral-300 ring-neutral-700/60',
+    assigned:        'bg-secondary text-foreground/80 ring-border',
     in_progress:     'bg-amber-500/10 text-amber-400 ring-amber-500/20',
     submitted:       'bg-sky-500/10 text-sky-400 ring-sky-500/20',
     returned:        'bg-indigo-500/10 text-indigo-300 ring-indigo-500/20',
@@ -46,7 +48,7 @@ function StatusBadge({ status }: { status: AssignmentStatus }) {
 
 function TypeBadge({ type }: { type: ClassroomAssignment['type'] }) {
   return (
-    <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium bg-neutral-800 text-neutral-400 ring-1 ring-white/[0.06]">
+    <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium bg-secondary text-muted-foreground ring-1 ring-border">
       {TYPE_LABEL[type]}
     </span>
   );
@@ -74,8 +76,7 @@ function AssignmentCard({ a, onLaunch }: { a: ClassroomAssignment; onLaunch: (a:
 
   return (
     <div className={cn(
-      'rounded-xl bg-neutral-900/80 border border-white/[0.06]',
-      'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]',
+      'rounded-xl bg-card border border-border shadow-sm',
       'p-5 flex flex-col gap-3',
       unreadFeedback && 'ring-1 ring-indigo-500/30',
     )}>
@@ -90,13 +91,13 @@ function AssignmentCard({ a, onLaunch }: { a: ClassroomAssignment; onLaunch: (a:
               </span>
             )}
           </div>
-          <h3 className="text-[14px] font-medium text-neutral-100 leading-snug">{a.title}</h3>
+          <h3 className="text-[14px] font-medium text-foreground/90 leading-snug">{a.title}</h3>
         </div>
         <StatusBadge status={a.status} />
       </div>
 
       {/* Description */}
-      <p className="text-[13px] text-neutral-400 leading-relaxed">{a.description}</p>
+      <p className="text-[13px] text-muted-foreground leading-relaxed">{a.description}</p>
 
       {/* Feedback preview */}
       {hasFeedback && a.feedback && (
@@ -117,7 +118,7 @@ function AssignmentCard({ a, onLaunch }: { a: ClassroomAssignment; onLaunch: (a:
           {a.dueDate && (
             <span className={cn(
               'text-[12px]',
-              overdue ? 'text-rose-400' : 'text-neutral-500',
+              overdue ? 'text-rose-400' : 'text-muted-foreground',
             )}>
               {overdue ? 'Overdue — ' : 'Due '}{formatDue(a.dueDate)}
             </span>
@@ -131,7 +132,7 @@ function AssignmentCard({ a, onLaunch }: { a: ClassroomAssignment; onLaunch: (a:
             size="sm"
             variant="ghost"
             onClick={() => onLaunch(a)}
-            className="h-7 px-3 text-[12px] text-neutral-300 hover:text-white hover:bg-white/[0.06] gap-1.5"
+            className="h-7 px-3 text-[12px] text-foreground/70 hover:text-foreground hover:bg-accent gap-1.5"
           >
             {a.status === 'in_progress' ? 'Resume' : 'Start'}
             <ChevronRight className="h-3 w-3" />
@@ -186,7 +187,7 @@ function OverviewTab({ onTabChange }: { onTabChange: (tab: string) => void }) {
       {/* Stats row */}
       <div className="grid grid-cols-5 gap-3">
         {[
-          { label: 'Assigned', value: counts.assigned, color: 'text-neutral-300' },
+          { label: 'Assigned', value: counts.assigned, color: 'text-foreground/80' },
           { label: 'In Progress', value: counts.in_progress, color: 'text-amber-400' },
           { label: 'Submitted', value: counts.submitted, color: 'text-sky-400' },
           { label: 'Needs Attention', value: counts.returned, color: 'text-indigo-300' },
@@ -194,7 +195,7 @@ function OverviewTab({ onTabChange }: { onTabChange: (tab: string) => void }) {
         ].map(stat => (
           <div
             key={stat.label}
-            className="rounded-xl bg-neutral-900/80 border border-white/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] px-4 py-4 flex flex-col gap-1"
+            className="rounded-xl bg-card border border-border shadow-sm px-4 py-4 flex flex-col gap-1"
           >
             <span className={cn('text-[22px] font-light tabular-nums', stat.color)}>{stat.value}</span>
             <IL>{stat.label}</IL>
@@ -224,25 +225,25 @@ function OverviewTab({ onTabChange }: { onTabChange: (tab: string) => void }) {
       {priority && (
         <div className="space-y-2">
           <IL>Priority</IL>
-          <div className="rounded-xl bg-neutral-900/80 border border-white/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] px-5 py-4 flex items-center justify-between gap-4">
+          <div className="rounded-xl bg-card border border-border shadow-sm px-5 py-4 flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <StatusBadge status={priority.status} />
                 {priority.dueDate && (
                   <span className={cn(
                     'text-[12px]',
-                    isPastDue(priority.dueDate) ? 'text-rose-400' : 'text-neutral-500',
+                    isPastDue(priority.dueDate) ? 'text-rose-400' : 'text-muted-foreground',
                   )}>
                     {isPastDue(priority.dueDate) ? 'Overdue — ' : 'Due '}{formatDue(priority.dueDate)}
                   </span>
                 )}
               </div>
-              <p className="text-[14px] font-medium text-neutral-100 truncate">{priority.title}</p>
+              <p className="text-[14px] font-medium text-foreground/90 truncate">{priority.title}</p>
             </div>
             <Button
               size="sm"
               onClick={() => onTabChange('assignments')}
-              className="shrink-0 h-8 px-4 text-[12px] bg-white/[0.07] hover:bg-white/[0.12] text-neutral-200 border border-white/[0.08] rounded-lg"
+              className="shrink-0 h-8 px-4 text-[12px] bg-secondary hover:bg-secondary/80 text-foreground/80 border border-border rounded-lg"
             >
               View
             </Button>
@@ -277,12 +278,12 @@ function OverviewTab({ onTabChange }: { onTabChange: (tab: string) => void }) {
             <button
               key={item.label}
               onClick={item.action}
-              className="rounded-xl bg-neutral-900/80 border border-white/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] px-4 py-4 flex flex-col gap-2.5 text-left hover:bg-neutral-800/80 hover:border-white/[0.1] transition-colors duration-150 group"
+              className="rounded-xl bg-card border border-border shadow-sm px-4 py-4 flex flex-col gap-2.5 text-left hover:bg-accent hover:border-border transition-colors duration-150 group"
             >
-              <item.icon className="h-4 w-4 text-neutral-500 group-hover:text-neutral-300 transition-colors duration-150" />
+              <item.icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground/70 transition-colors duration-150" />
               <div>
-                <p className="text-[13px] font-medium text-neutral-200">{item.label}</p>
-                <p className="text-[11px] text-neutral-500 mt-0.5">{item.sub}</p>
+                <p className="text-[13px] font-medium text-foreground/80">{item.label}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{item.sub}</p>
               </div>
             </button>
           ))}
@@ -341,8 +342,8 @@ function AssignmentsTab() {
             className={cn(
               'px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors duration-150',
               filter === opt.value
-                ? 'bg-white/[0.09] text-white border border-white/[0.12]'
-                : 'text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.04] border border-transparent',
+                ? 'bg-accent text-foreground border border-border'
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent border border-transparent',
             )}
           >
             {opt.label}
@@ -356,8 +357,8 @@ function AssignmentsTab() {
           <AssignmentCard key={a.id} a={a} onLaunch={handleLaunch} />
         ))}
         {filtered.length === 0 && (
-          <div className="rounded-xl bg-neutral-900/80 border border-white/[0.06] px-6 py-10 text-center">
-            <p className="text-[13px] text-neutral-500">No assignments in this category.</p>
+          <div className="rounded-xl bg-card border border-border shadow-sm px-6 py-10 text-center">
+            <p className="text-[13px] text-muted-foreground">No assignments in this category.</p>
           </div>
         )}
       </div>
@@ -375,22 +376,22 @@ function MaterialsTab() {
       {MOCK_MATERIALS.map(m => (
         <div
           key={m.id}
-          className="rounded-xl bg-neutral-900/80 border border-white/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] px-5 py-4 flex flex-col gap-2"
+          className="rounded-xl bg-card border border-border shadow-sm px-5 py-4 flex flex-col gap-2"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium bg-neutral-800 text-neutral-400 ring-1 ring-white/[0.06]">
+                <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium bg-secondary text-muted-foreground ring-1 ring-border">
                   {m.topic}
                 </span>
               </div>
-              <h3 className="text-[14px] font-medium text-neutral-100">{m.title}</h3>
+              <h3 className="text-[14px] font-medium text-foreground/90">{m.title}</h3>
             </div>
-            <span className="text-[11px] text-neutral-600 shrink-0">
+            <span className="text-[11px] text-muted-foreground/70 shrink-0">
               {new Date(m.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </span>
           </div>
-          <p className="text-[13px] text-neutral-400 leading-relaxed">{m.summary}</p>
+          <p className="text-[13px] text-muted-foreground leading-relaxed">{m.summary}</p>
         </div>
       ))}
     </div>
@@ -407,16 +408,15 @@ function FeedbackTab() {
   return (
     <div className="space-y-3">
       {withFeedback.length === 0 && (
-        <div className="rounded-xl bg-neutral-900/80 border border-white/[0.06] px-6 py-10 text-center">
-          <p className="text-[13px] text-neutral-500">No feedback returned yet.</p>
+        <div className="rounded-xl bg-card border border-border shadow-sm px-6 py-10 text-center">
+          <p className="text-[13px] text-muted-foreground">No feedback returned yet.</p>
         </div>
       )}
       {withFeedback.map(a => (
         <div
           key={a.id}
           className={cn(
-            'rounded-xl bg-neutral-900/80 border border-white/[0.06]',
-            'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] px-5 py-4 space-y-3',
+            'rounded-xl bg-card border border-border shadow-sm px-5 py-4 space-y-3',
             !a.feedback!.opened && 'ring-1 ring-indigo-500/30',
           )}
         >
@@ -430,7 +430,7 @@ function FeedbackTab() {
                   </span>
                 )}
               </div>
-              <h3 className="text-[14px] font-medium text-neutral-100">{a.title}</h3>
+              <h3 className="text-[14px] font-medium text-foreground/90">{a.title}</h3>
             </div>
             {a.feedback!.score !== undefined && (
               <span className="text-[20px] font-light text-emerald-400 tabular-nums shrink-0">
@@ -438,11 +438,11 @@ function FeedbackTab() {
               </span>
             )}
           </div>
-          <div className="rounded-lg px-4 py-3 bg-neutral-800/60 border border-white/[0.04]">
+          <div className="rounded-lg px-4 py-3 bg-secondary/60 border border-border">
             <IL>Instructor comment</IL>
-            <p className="mt-1.5 text-[13px] text-neutral-300 leading-relaxed">{a.feedback!.comments}</p>
+            <p className="mt-1.5 text-[13px] text-foreground/80 leading-relaxed">{a.feedback!.comments}</p>
           </div>
-          <div className="text-[11px] text-neutral-600">
+          <div className="text-[11px] text-muted-foreground/70">
             Returned {new Date(a.feedback!.returnedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </div>
         </div>
@@ -452,7 +452,7 @@ function FeedbackTab() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Submissions tab — stub for Phase 1
+// Submissions tab
 // ─────────────────────────────────────────────────────────────────────────────
 
 function SubmissionsTab() {
@@ -465,20 +465,20 @@ function SubmissionsTab() {
       {submitted.map(a => (
         <div
           key={a.id}
-          className="rounded-xl bg-neutral-900/80 border border-white/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] px-5 py-4 flex items-center justify-between gap-4"
+          className="rounded-xl bg-card border border-border shadow-sm px-5 py-4 flex items-center justify-between gap-4"
         >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <TypeBadge type={a.type} />
             </div>
-            <h3 className="text-[14px] font-medium text-neutral-100">{a.title}</h3>
+            <h3 className="text-[14px] font-medium text-foreground/90">{a.title}</h3>
           </div>
           <StatusBadge status={a.status} />
         </div>
       ))}
       {submitted.length === 0 && (
-        <div className="rounded-xl bg-neutral-900/80 border border-white/[0.06] px-6 py-10 text-center">
-          <p className="text-[13px] text-neutral-500">No submissions yet.</p>
+        <div className="rounded-xl bg-card border border-border shadow-sm px-6 py-10 text-center">
+          <p className="text-[13px] text-muted-foreground">No submissions yet.</p>
         </div>
       )}
     </div>
@@ -496,38 +496,38 @@ function ReviewTab() {
     <div className="space-y-3">
       <button
         onClick={() => navigate('/waj')}
-        className="w-full rounded-xl bg-neutral-900/80 border border-white/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] px-5 py-5 flex items-center justify-between gap-4 text-left hover:bg-neutral-800/80 hover:border-white/[0.1] transition-colors duration-150 group"
+        className="w-full rounded-xl bg-card border border-border shadow-sm px-5 py-5 flex items-center justify-between gap-4 text-left hover:bg-accent hover:border-border transition-colors duration-150 group"
       >
         <div className="flex items-start gap-4">
           <div className="mt-0.5 w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
             <RotateCcw className="h-4 w-4 text-rose-400" />
           </div>
           <div>
-            <p className="text-[14px] font-medium text-neutral-100">Wrong Answer Journal</p>
-            <p className="text-[12px] text-neutral-500 mt-0.5 leading-relaxed">
+            <p className="text-[14px] font-medium text-foreground/90">Wrong Answer Journal</p>
+            <p className="text-[12px] text-muted-foreground mt-0.5 leading-relaxed">
               Review every missed question, track reattempt history, and build your correction record.
             </p>
           </div>
         </div>
-        <ChevronRight className="h-4 w-4 text-neutral-600 group-hover:text-neutral-400 shrink-0 transition-colors duration-150" />
+        <ChevronRight className="h-4 w-4 text-muted-foreground/70 group-hover:text-muted-foreground shrink-0 transition-colors duration-150" />
       </button>
 
       <button
         onClick={() => navigate('/flagged')}
-        className="w-full rounded-xl bg-neutral-900/80 border border-white/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] px-5 py-5 flex items-center justify-between gap-4 text-left hover:bg-neutral-800/80 hover:border-white/[0.1] transition-colors duration-150 group"
+        className="w-full rounded-xl bg-card border border-border shadow-sm px-5 py-5 flex items-center justify-between gap-4 text-left hover:bg-accent hover:border-border transition-colors duration-150 group"
       >
         <div className="flex items-start gap-4">
           <div className="mt-0.5 w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
             <Flag className="h-4 w-4 text-amber-400" />
           </div>
           <div>
-            <p className="text-[14px] font-medium text-neutral-100">Flagged Questions</p>
-            <p className="text-[12px] text-neutral-500 mt-0.5 leading-relaxed">
+            <p className="text-[14px] font-medium text-foreground/90">Flagged Questions</p>
+            <p className="text-[12px] text-muted-foreground mt-0.5 leading-relaxed">
               Questions you marked for later review. Return to them, reattempt, or clear the flag.
             </p>
           </div>
         </div>
-        <ChevronRight className="h-4 w-4 text-neutral-600 group-hover:text-neutral-400 shrink-0 transition-colors duration-150" />
+        <ChevronRight className="h-4 w-4 text-muted-foreground/70 group-hover:text-muted-foreground shrink-0 transition-colors duration-150" />
       </button>
     </div>
   );
@@ -537,7 +537,58 @@ function ReviewTab() {
 // Tab definition
 // ─────────────────────────────────────────────────────────────────────────────
 
-type TabId = 'overview' | 'assignments' | 'materials' | 'submissions' | 'feedback' | 'review';
+// ─────────────────────────────────────────────────────────────────────────────
+// Bootcamps tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BootcampsTab: React.FC = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="space-y-6">
+      <div>
+        <IL>Featured Bootcamp</IL>
+        <p className="text-xs text-muted-foreground mt-1">Focused skill drills built into your classroom.</p>
+      </div>
+
+      {/* Causation Station Card */}
+      <div className="rounded-xl bg-card border border-border shadow-sm p-6 flex flex-col sm:flex-row gap-6 items-start">
+        <div className="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center flex-shrink-0">
+          <span className="text-xl">⚗️</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Causation Station</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-xl leading-relaxed">
+                A focused bootcamp to master causal reasoning — one of the most frequently tested skills on the LSAT. Train across 4 progressive modules: spot causation vs. correlation, identify alternate explanations, test relationships, and apply skills to real LSAT questions.
+              </p>
+              <div className="flex items-center gap-4 mt-3">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">4 Modules</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">76 Questions</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Flashcards + Journal</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={() => navigate('/bootcamp/causation-station')}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background text-sm font-medium px-4 py-2 hover:bg-foreground/90 transition-colors duration-150"
+            >
+              Launch Bootcamp
+              <span className="ml-1">→</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab definition
+// ─────────────────────────────────────────────────────────────────────────────
+
+type TabId = 'overview' | 'assignments' | 'materials' | 'submissions' | 'feedback' | 'review' | 'bootcamps';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'overview',     label: 'Overview' },
@@ -546,6 +597,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'submissions',  label: 'Submissions' },
   { id: 'feedback',     label: 'Feedback' },
   { id: 'review',       label: 'Review Tools' },
+  { id: 'bootcamps',    label: 'Bootcamps' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -566,26 +618,27 @@ export default function Classroom() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="min-h-screen bg-background">
 
       {/* ── Sticky header ───────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-10 border-b border-white/[0.06] bg-neutral-950/80 backdrop-blur-xl">
-        <div className="px-8 py-4 flex items-center justify-between max-w-5xl mx-auto">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-xl">
+        <div className="px-4 lg:px-8 py-4 flex items-center justify-between max-w-7xl mx-auto">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/')}
-            className="gap-2 text-neutral-400 hover:text-white hover:bg-white/[0.06] -ml-2"
+            onClick={() => navigate('/foyer')}
+            className="gap-2 text-muted-foreground hover:text-foreground hover:bg-accent -ml-2"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Return to Workspace
+            Return to Main Hub
           </Button>
           <IL>Classroom</IL>
-          <div className="w-[130px]" /> {/* balance spacer */}
+          <LogoutButton />
+          <ThemeToggle />
         </div>
 
         {/* ── Tab bar ──────────────────────────────────────────────────────── */}
-        <div className="px-8 max-w-5xl mx-auto flex items-end gap-1 overflow-x-auto scrollbar-none">
+        <div className="px-4 lg:px-8 max-w-7xl mx-auto flex items-end gap-1 overflow-x-auto scrollbar-none">
           {TABS.map(tab => (
             <button
               key={tab.id}
@@ -593,8 +646,8 @@ export default function Classroom() {
               className={cn(
                 'relative px-4 py-2.5 text-[12px] font-medium whitespace-nowrap transition-colors duration-150 shrink-0',
                 activeTab === tab.id
-                  ? 'text-white'
-                  : 'text-neutral-500 hover:text-neutral-300',
+                  ? 'text-foreground'
+                  : 'text-muted-foreground hover:text-foreground/70',
               )}
             >
               {tab.label}
@@ -604,7 +657,7 @@ export default function Classroom() {
                 </span>
               )}
               {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-4 right-4 h-px bg-white rounded-full" />
+                <span className="absolute bottom-0 left-4 right-4 h-px bg-foreground rounded-full" />
               )}
             </button>
           ))}
@@ -612,13 +665,14 @@ export default function Classroom() {
       </header>
 
       {/* ── Content ─────────────────────────────────────────────────────────── */}
-      <main className="max-w-5xl mx-auto px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         {activeTab === 'overview'    && <OverviewTab onTabChange={(t) => setActiveTab(t as TabId)} />}
         {activeTab === 'assignments' && <AssignmentsTab />}
         {activeTab === 'materials'   && <MaterialsTab />}
         {activeTab === 'submissions' && <SubmissionsTab />}
         {activeTab === 'feedback'    && <FeedbackTab />}
         {activeTab === 'review'      && <ReviewTab />}
+        {activeTab === 'bootcamps'   && <BootcampsTab />}
       </main>
     </div>
   );

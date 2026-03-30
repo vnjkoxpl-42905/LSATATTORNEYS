@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { useUserSettings } from '@/contexts/UserSettingsContext';
 import type { FullSectionConfig, TimerMode } from '@/types/drill';
+// TimerMode used in handleStart to type the local `mode` variable
 import type { QuestionManifest } from '@/lib/questionLoader';
 
 interface SectionSelectorProps {
@@ -15,8 +16,8 @@ export function SectionSelector({ manifest, onStartSection, onCancel }: SectionS
   const { settings } = useUserSettings();
   const [selectedPT, setSelectedPT] = useState<number | null>(null);
   const [selectedSection, setSelectedSection] = useState<number | null>(null);
-  const [useStandardTiming, setUseStandardTiming] = useState(true);
-  const [customMinutes, setCustomMinutes] = useState(35);
+  const [timingOption, setTimingOption] = useState<'standard' | '1.5x' | '2x' | 'custom'>('standard');
+  const [customMinutes, setCustomMinutes] = useState<number | ''>(35);
 
   const availablePTs = Array.from(
     new Set(manifest.sections.map(s => s.pt))
@@ -34,13 +35,24 @@ export function SectionSelector({ manifest, onStartSection, onCancel }: SectionS
 
   const handleStart = () => {
     if (selectedPT && selectedSection) {
-      const timerMode = useStandardTiming ? settings.defaultTimingMode : 'custom';
+      let mode: TimerMode;
+      let customMins: number | undefined;
+      if (timingOption === 'standard') {
+        mode = settings.defaultTimingMode;
+      } else if (timingOption === '1.5x') {
+        mode = '52.5';
+      } else if (timingOption === '2x') {
+        mode = '70';
+      } else {
+        mode = 'custom';
+        customMins = customMinutes === '' ? 35 : customMinutes;
+      }
       onStartSection({
         pt: selectedPT,
         section: selectedSection,
         timer: {
-          mode: timerMode,
-          customMinutes: timerMode === 'custom' ? customMinutes : undefined,
+          mode,
+          customMinutes: customMins,
           isPaused: false,
           elapsedMs: 0,
           startedAt: Date.now(),
@@ -52,12 +64,12 @@ export function SectionSelector({ manifest, onStartSection, onCancel }: SectionS
   const getStandardTimingLabel = () => {
     const mode = settings.defaultTimingMode;
     if (mode === '35') return '35:00';
-    if (mode === '52.5') return '52:30 (1.5×)';
-    if (mode === '70') return '70:00 (2×)';
+    if (mode === '52.5') return '52:30';
+    if (mode === '70') return '70:00';
     return 'Stopwatch';
   };
 
-  const isReadyToStart = selectedPT && selectedSection && (useStandardTiming || customMinutes > 0);
+  const isReadyToStart = selectedPT && selectedSection && (timingOption !== 'custom' || (customMinutes !== '' && customMinutes > 0));
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
@@ -152,49 +164,43 @@ export function SectionSelector({ manifest, onStartSection, onCancel }: SectionS
               Timing
             </label>
             <div className="grid grid-cols-2 gap-3 p-1.5 bg-muted/30 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setUseStandardTiming(true)}
-                className={cn(
-                  "relative px-6 py-4 rounded-lg text-sm font-medium transition-all duration-150",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20",
-                  useStandardTiming
-                    ? "bg-background shadow-sm text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                )}
-              >
-                <div className="flex flex-col items-center gap-1">
-                  <span className="font-semibold">Standard</span>
-                  <span className="text-xs opacity-60">{getStandardTimingLabel()}</span>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setUseStandardTiming(false)}
-                className={cn(
-                  "relative px-6 py-4 rounded-lg text-sm font-medium transition-all duration-150",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20",
-                  !useStandardTiming
-                    ? "bg-background shadow-sm text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                )}
-              >
-                <div className="flex flex-col items-center gap-1">
-                  <span className="font-semibold">Custom</span>
-                  <span className="text-xs opacity-60">Set your time</span>
-                </div>
-              </button>
+              {(
+                [
+                  { key: 'standard', label: 'Standard', sub: getStandardTimingLabel() },
+                  { key: '1.5x',     label: 'Time & a Half', sub: '52 min' },
+                  { key: '2x',       label: 'Double Time',   sub: '70 min' },
+                  { key: 'custom',   label: 'Custom',        sub: 'Set your time' },
+                ] as const
+              ).map(({ key, label, sub }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTimingOption(key)}
+                  className={cn(
+                    "relative px-6 py-4 rounded-lg text-sm font-medium transition-all duration-150",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20",
+                    timingOption === key
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                  )}
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="font-semibold">{label}</span>
+                    <span className="text-xs opacity-60">{sub}</span>
+                  </div>
+                </button>
+              ))}
             </div>
 
             {/* Custom Time Input */}
-            {!useStandardTiming && (
+            {timingOption === 'custom' && (
               <div className="animate-in fade-in slide-in-from-top-1 duration-150">
                 <input
                   type="number"
                   min={1}
                   max={999}
                   value={customMinutes}
-                  onChange={(e) => setCustomMinutes(Number(e.target.value))}
+                  onChange={(e) => setCustomMinutes(e.target.value === '' ? '' : Number(e.target.value))}
                   className={cn(
                     "w-full h-12 px-4 text-base text-center rounded-lg",
                     "bg-background/50 border border-border/50",

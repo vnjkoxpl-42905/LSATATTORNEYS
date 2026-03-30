@@ -7,6 +7,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { questionBank } from '@/lib/questionLoader';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/contexts/ThemeContext';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoutButton } from '@/components/LogoutButton';
 
 interface AnalyticsData {
   accuracyByType: Record<string, { correct: number; total: number; accuracy: number }>;
@@ -28,11 +31,19 @@ interface OpportunityArea {
 const Analytics = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
   const [data, setData] = React.useState<AnalyticsData | null>(null);
   const [opportunities, setOpportunities] = React.useState<OpportunityArea[]>([]);
   const [loading, setLoading] = React.useState(true);
   const opportunitiesRef = useScrollAnimation();
   const performanceRef = useScrollAnimation();
+
+  // SVG color helpers — adapt to current theme
+  const svgTrack   = isLight ? 'rgba(0,0,0,0.07)'  : 'rgba(255,255,255,0.06)';
+  const svgArc     = isLight ? 'rgba(0,0,0,0.65)'  : 'rgba(255,255,255,0.7)';
+  const svgArcSm   = isLight ? 'rgba(0,0,0,0.55)'  : 'rgba(255,255,255,0.6)';
+  const dotColor   = isLight ? 'rgb(0,0,0)'         : 'rgb(255,255,255)';
 
   React.useEffect(() => {
     if (!user) {
@@ -171,10 +182,10 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-950">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border border-white/10 border-t-white/30 rounded-full animate-spin" />
-          <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-600">Loading analytics</p>
+          <div className="w-8 h-8 border border-border border-t-foreground/30 rounded-full animate-spin" />
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Loading analytics</p>
         </div>
       </div>
     );
@@ -184,30 +195,31 @@ const Analytics = () => {
   const sortedTypes = hasData ? Object.keys(data.accuracyByType).sort() : [];
 
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="min-h-screen bg-background">
 
       {/* Header */}
-      <header className="border-b border-white/[0.06] bg-neutral-950/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="px-8 py-4 flex items-center justify-between max-w-6xl mx-auto">
+      <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-10">
+        <div className="px-4 lg:px-8 py-4 flex items-center justify-between max-w-7xl mx-auto">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/')}
-            className="gap-2 text-neutral-400 hover:text-white hover:bg-white/[0.06] -ml-2"
+            onClick={() => navigate('/foyer')}
+            className="gap-2 text-muted-foreground hover:text-foreground hover:bg-accent -ml-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            Return to Main Hub
           </Button>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-400 font-medium">Analytics</p>
-          <div className="w-16" />
+          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-medium">Analytics</p>
+          <LogoutButton />
+          <ThemeToggle />
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-8 pt-8 pb-16">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-8 pb-16">
         {!hasData ? (
-          <div className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-12 text-center">
-            <p className="text-neutral-400 text-sm">No data yet for this period</p>
-            <p className="text-[12px] text-neutral-600 mt-2">Complete some drills to see your analytics</p>
+          <div className="rounded-xl bg-card border border-border shadow-sm p-12 text-center">
+            <p className="text-muted-foreground text-sm">No data yet for this period</p>
+            <p className="text-[12px] text-muted-foreground/70 mt-2">Complete some drills to see your analytics</p>
           </div>
         ) : (
           <>
@@ -219,12 +231,12 @@ const Analytics = () => {
                 opportunitiesRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               )}
             >
-              <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-5">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium mb-5">
                 Top Opportunities
               </p>
               {opportunities.length === 0 ? (
-                <div className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-8 text-center">
-                  <p className="text-neutral-400 text-sm">Great work — no significant improvement areas detected.</p>
+                <div className="rounded-xl bg-card border border-border shadow-sm p-8 text-center">
+                  <p className="text-muted-foreground text-sm">Great work — no significant improvement areas detected.</p>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-3 gap-4">
@@ -232,35 +244,34 @@ const Analytics = () => {
                     <button
                       key={idx}
                       className={cn(
-                        'group rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6',
-                        'hover:bg-neutral-800/80 hover:border-white/[0.12]',
+                        'group rounded-xl bg-card border border-border shadow-sm p-6',
+                        'hover:bg-accent hover:border-border',
                         'transition-all duration-200 text-left focus:outline-none',
-                        'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]'
                       )}
                       onClick={() => startDrill(opp.type, opp.level)}
                     >
                       <div className="flex flex-col items-center">
                         <div className="relative w-28 h-28 mb-4">
                           <svg viewBox="0 0 100 100" className="transform -rotate-90 w-full h-full">
-                            <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+                            <circle cx="50" cy="50" r="40" fill="none" stroke={svgTrack} strokeWidth="8" />
                             <circle
                               cx="50" cy="50" r="40" fill="none"
-                              stroke="rgba(255,255,255,0.7)" strokeWidth="8"
+                              stroke={svgArc} strokeWidth="8"
                               strokeDasharray={`${(opp.currentAccuracy / 100) * 251.2} 251.2`}
                               strokeLinecap="round"
                             />
                           </svg>
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <div className="text-2xl font-semibold text-white tabular-nums">{opp.impact}</div>
-                            <div className="text-[10px] text-neutral-500 uppercase tracking-[0.12em]">Impact</div>
+                            <div className="text-2xl font-semibold text-foreground tabular-nums">{opp.impact}</div>
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-[0.12em]">Impact</div>
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-[13px] font-medium text-neutral-200">{opp.type} · L{opp.level}</div>
-                          <div className="text-[11px] text-neutral-500 mt-1">
+                          <div className="text-[13px] font-medium text-foreground/80">{opp.type} · L{opp.level}</div>
+                          <div className="text-[11px] text-muted-foreground mt-1">
                             {Math.round(opp.currentAccuracy)}% accuracy · {opp.attempts} attempts
                           </div>
-                          <div className="text-[11px] text-neutral-600 mt-1 group-hover:text-neutral-400 transition-colors">
+                          <div className="text-[11px] text-muted-foreground/70 mt-1 group-hover:text-muted-foreground transition-colors">
                             Tap to drill →
                           </div>
                         </div>
@@ -281,7 +292,7 @@ const Analytics = () => {
             >
               {/* Type Bars */}
               <div>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-5">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium mb-5">
                   Performance by Type
                 </p>
                 <div className="space-y-2.5">
@@ -297,21 +308,21 @@ const Analytics = () => {
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startDrill(type, undefined); } }}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-44 text-[13px] text-neutral-300 truncate">{type}</div>
-                          <div className="flex-1 h-7 bg-white/[0.04] border border-white/[0.06] rounded-md relative overflow-hidden group-hover:border-white/[0.12] transition-all">
+                          <div className="w-44 text-[13px] text-foreground/80 truncate">{type}</div>
+                          <div className="flex-1 h-7 bg-secondary border border-border rounded-md relative overflow-hidden group-hover:border-border transition-all">
                             <div
-                              className="h-full bg-white/[0.18] rounded-md transition-all duration-500"
+                              className="h-full bg-foreground/[0.18] rounded-md transition-all duration-500"
                               style={{ width: `${stats.accuracy}%` }}
                             />
                             <div className="absolute inset-0 flex items-center justify-end pr-2.5">
-                              <span className="text-[12px] text-neutral-400 font-medium tabular-nums">
+                              <span className="text-[12px] text-muted-foreground font-medium tabular-nums">
                                 {Math.round(stats.accuracy)}%
                               </span>
                             </div>
                           </div>
                           <div className={cn(
                             'w-6 text-[12px] text-center font-medium tabular-nums',
-                            trend > 0 ? 'text-emerald-400' : trend < 0 ? 'text-rose-400' : 'text-neutral-600'
+                            trend > 0 ? 'text-emerald-400' : trend < 0 ? 'text-rose-400' : 'text-muted-foreground/70'
                           )}>
                             {trend > 0 ? '↑' : trend < 0 ? '↓' : '—'}
                           </div>
@@ -324,22 +335,22 @@ const Analytics = () => {
 
               {/* Matrix */}
               <div className="lg:w-96">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-5">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium mb-5">
                   Type × Level Matrix
                 </p>
-                <div className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+                <div className="rounded-xl bg-card border border-border shadow-sm p-4">
                   <div className="space-y-2">
                     <div className="flex gap-2 mb-3">
                       <div className="w-28" />
                       {[1, 2, 3, 4, 5].map(level => (
-                        <div key={level} className="w-10 text-center text-[11px] text-neutral-600 font-medium">
+                        <div key={level} className="w-10 text-center text-[11px] text-muted-foreground/70 font-medium">
                           L{level}
                         </div>
                       ))}
                     </div>
                     {sortedTypes.map(type => (
                       <div key={type} className="flex gap-2 items-center">
-                        <div className="w-28 text-[11px] text-neutral-400 truncate" title={type}>{type}</div>
+                        <div className="w-28 text-[11px] text-muted-foreground truncate" title={type}>{type}</div>
                         {[1, 2, 3, 4, 5].map(level => {
                           const stats = data.accuracyByTypeLevel[type]?.[level];
                           const accuracy = stats?.accuracy || 0;
@@ -349,14 +360,14 @@ const Analytics = () => {
                           return (
                             <div
                               key={level}
-                              className="w-10 h-10 flex items-center justify-center cursor-pointer hover:bg-white/[0.04] rounded-md transition-colors"
+                              className="w-10 h-10 flex items-center justify-center cursor-pointer hover:bg-accent rounded-md transition-colors"
                               onClick={() => stats && startDrill(type, level)}
                               tabIndex={stats ? 0 : -1}
                               title={stats ? `${type} L${level}: ${Math.round(accuracy)}% (${stats.total} attempts)` : 'No data'}
                             >
                               <div
-                                className="rounded-full bg-white transition-all"
-                                style={{ width: `${size}px`, height: `${size}px`, opacity }}
+                                className="rounded-full transition-all"
+                                style={{ width: `${size}px`, height: `${size}px`, opacity, background: dotColor }}
                               />
                             </div>
                           );
@@ -370,7 +381,7 @@ const Analytics = () => {
 
             {/* Difficulty Circles */}
             <div className="mt-12">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium mb-5">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium mb-5">
                 Performance by Difficulty
               </p>
               <div className="grid grid-cols-5 gap-3">
@@ -380,10 +391,9 @@ const Analytics = () => {
                     <button
                       key={level}
                       className={cn(
-                        'group rounded-xl bg-neutral-900/80 border border-white/[0.06] p-5',
-                        'hover:bg-neutral-800/80 hover:border-white/[0.12]',
+                        'group rounded-xl bg-card border border-border shadow-sm p-5',
+                        'hover:bg-accent hover:border-border',
                         'transition-all duration-200 focus:outline-none',
-                        'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]'
                       )}
                       onClick={() => startDrill(undefined, level)}
                       tabIndex={0}
@@ -391,24 +401,24 @@ const Analytics = () => {
                       <div className="flex flex-col items-center">
                         <div className="relative w-20 h-20 mb-3">
                           <svg viewBox="0 0 100 100" className="transform -rotate-90 w-full h-full">
-                            <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+                            <circle cx="50" cy="50" r="40" fill="none" stroke={svgTrack} strokeWidth="8" />
                             <circle
                               cx="50" cy="50" r="40" fill="none"
-                              stroke="rgba(255,255,255,0.6)" strokeWidth="8"
+                              stroke={svgArcSm} strokeWidth="8"
                               strokeDasharray={`${(stats.accuracy / 100) * 251.2} 251.2`}
                               strokeLinecap="round"
                             />
                           </svg>
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-lg font-semibold text-white tabular-nums">
+                            <div className="text-lg font-semibold text-foreground tabular-nums">
                               {Math.round(stats.accuracy)}%
                             </div>
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-[12px] font-medium text-neutral-300">Level {level}</div>
+                          <div className="text-[12px] font-medium text-foreground/80">Level {level}</div>
                           {stats.total > 0 && (
-                            <div className="text-[11px] text-neutral-600 mt-0.5">{stats.total} attempts</div>
+                            <div className="text-[11px] text-muted-foreground/70 mt-0.5">{stats.total} attempts</div>
                           )}
                         </div>
                       </div>

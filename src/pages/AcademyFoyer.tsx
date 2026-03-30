@@ -17,14 +17,19 @@
 import * as React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import WelcomeLoading from "@/components/WelcomeLoading";
 import OrbitalHub, { FoyerPhase, FoyerNode } from "@/components/foyer/OrbitalHub";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LogoutButton } from "@/components/LogoutButton";
 
 export default function AcademyFoyer() {
   const navigate  = useNavigate();
   const location  = useLocation();
   const { user, loading: authLoading } = useAuth();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
 
   // ── Location state injected by Auth.tsx on fresh login ──────────────────────
   const state = location.state as { showWelcome?: boolean; welcomeName?: string } | null;
@@ -36,7 +41,6 @@ export default function AcademyFoyer() {
     ?? "there";
 
   // ── Session guard: ensure Welcome doesn't replay on back-navigation ─────────
-  // Once mounted with showWelcome=true, replace the history entry with no state.
   React.useEffect(() => {
     if (showWelcomeFromState) {
       navigate("/foyer", { replace: true, state: null });
@@ -50,8 +54,6 @@ export default function AcademyFoyer() {
   }, [user, authLoading, navigate]);
 
   // ── Phase state machine ──────────────────────────────────────────────────────
-  // On fresh login: start in "ghost" (hub faint underneath Welcome overlay)
-  // On return visit: start in "idle" (hub fully visible immediately)
   const [phase, setPhase] = React.useState<FoyerPhase>(
     showWelcomeFromState ? "ghost" : "idle"
   );
@@ -70,10 +72,9 @@ export default function AcademyFoyer() {
 
   // ── Welcome → Materialization handoff ───────────────────────────────────────
   const handleWelcomeComplete = React.useCallback(() => {
-    setShowWelcome(false);       // unmount WelcomeLoading
-    setPhase("materializing");   // start ring draw-in + node stagger
+    setShowWelcome(false);
+    setPhase("materializing");
 
-    // Allow materialization to play (~2.4s) then settle to idle
     matTimerRef.current = setTimeout(() => {
       setPhase("idle");
     }, 2400);
@@ -92,14 +93,27 @@ export default function AcademyFoyer() {
   // ── Don't render until auth is resolved ─────────────────────────────────────
   if (authLoading || !user) return null;
 
+  // Theme-adaptive colors
+  const brandColor   = isLight ? "rgba(0,0,0,0.38)"     : "rgba(255,255,255,0.22)";
+  const promptColor  = isLight ? "rgba(0,0,0,0.32)"     : "rgba(255,255,255,0.18)";
+  const dissolveGrad = isLight
+    ? "radial-gradient(ellipse 60% 60% at 50% 50%, transparent 20%, rgba(255,255,255,0.7) 80%, #fff 100%)"
+    : "radial-gradient(ellipse 60% 60% at 50% 50%, transparent 20%, rgba(0,0,0,0.7) 80%, #000 100%)";
+
   return (
-    <div className="fixed inset-0 bg-[#000000] overflow-hidden">
+    <div className="fixed inset-0 bg-background overflow-hidden">
+
+      {/* ── Top-right controls ── */}
+      <div className="absolute top-5 right-6 z-30 flex items-center gap-1">
+        <LogoutButton />
+        <ThemeToggle />
+      </div>
 
       {/* ── LSAT U wordmark — ultra-faint brand anchor ── */}
       <div className="absolute top-8 inset-x-0 flex justify-center z-30 pointer-events-none">
         <span
-          className="uppercase font-medium select-none"
-          style={{ fontSize: 9, letterSpacing: "0.42em", color: "rgba(255,255,255,0.09)" }}
+          className="uppercase font-semibold select-none"
+          style={{ fontSize: 9, letterSpacing: "0.42em", color: brandColor }}
         >
           LSAT U
         </span>
@@ -107,7 +121,6 @@ export default function AcademyFoyer() {
 
       {/* ── Orbital Hub ── */}
       <div className="absolute inset-0 flex items-center justify-center z-10">
-        {/* Square container — responsive, limited to 80% of both viewport axes */}
         <div style={{ width: "min(440px, 80vw, 80vh)", height: "min(440px, 80vw, 80vh)" }}>
           <OrbitalHub
             phase={phase}
@@ -128,8 +141,8 @@ export default function AcademyFoyer() {
             transition={{ duration: 1, delay: 0.4 }}
           >
             <span
-              className="uppercase select-none"
-              style={{ fontSize: 8, letterSpacing: "0.38em", color: "rgba(255,255,255,0.09)" }}
+              className="uppercase font-semibold select-none"
+              style={{ fontSize: 8, letterSpacing: "0.38em", color: promptColor }}
             >
               Select a module
             </span>
@@ -144,10 +157,7 @@ export default function AcademyFoyer() {
             className="absolute inset-0 z-40 pointer-events-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{
-              background:
-                "radial-gradient(ellipse 60% 60% at 50% 50%, transparent 20%, rgba(0,0,0,0.7) 80%, #000 100%)",
-            }}
+            style={{ background: dissolveGrad }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           />
         )}

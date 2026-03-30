@@ -22,6 +22,8 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoutButton } from '@/components/LogoutButton';
 import type { DrillMode, FullSectionConfig, TypeDrillConfig } from '@/types/drill';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -194,10 +196,10 @@ export default function Home() {
   // ── Loading / Error states ──────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-950">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border border-white/10 border-t-white/30 rounded-full animate-spin" />
-          <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-600">
+          <div className="w-10 h-10 border border-border border-t-foreground/30 rounded-full animate-spin" />
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Preparing your workspace
           </p>
         </div>
@@ -207,8 +209,8 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-950">
-        <p className="text-sm text-neutral-400">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">{error}</p>
       </div>
     );
   }
@@ -217,16 +219,16 @@ export default function Home() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="min-h-screen bg-background">
 
       {/* ── Header — minimal, no branding ──────────────────────────────────── */}
-      <header className="border-b border-white/[0.06] bg-neutral-950/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="px-8 py-4 flex items-center justify-between max-w-6xl mx-auto">
+      <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-10">
+        <div className="px-4 lg:px-8 py-4 flex items-center justify-between max-w-7xl mx-auto">
           <div>
-            <h2 className="text-sm font-medium text-white">
+            <h2 className="text-sm font-medium text-foreground">
               Welcome back, {getFirstName()}
             </h2>
-            <p className="text-xs text-neutral-500 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {new Date().toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
@@ -236,10 +238,12 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <LogoutButton />
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="sm"
-              className="text-neutral-400 hover:text-white hover:bg-white/[0.06]"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent"
               onClick={() => navigate('/foyer')}
             >
               Main Hub
@@ -247,7 +251,7 @@ export default function Home() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-neutral-400 hover:text-white hover:bg-white/[0.06]"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent"
               onClick={() => navigate('/analytics')}
             >
               View Analytics
@@ -255,11 +259,11 @@ export default function Home() {
             <Button
               variant="ghost"
               size="sm"
-              className="gap-2 text-neutral-400 hover:text-white hover:bg-white/[0.06]"
+              className="gap-2 text-muted-foreground hover:text-foreground hover:bg-accent"
               onClick={() => navigate('/profile')}
             >
-              <Avatar className="h-7 w-7 border border-white/[0.08]">
-                <AvatarFallback className="text-xs bg-neutral-800 text-neutral-300">
+              <Avatar className="h-7 w-7 border border-border">
+                <AvatarFallback className="text-xs bg-secondary text-foreground/80">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
@@ -270,7 +274,7 @@ export default function Home() {
       </header>
 
       {/* ── Canvas ─────────────────────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-8 pt-8 pb-16 animate-fade-in">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-8 pb-16 animate-fade-in">
 
         {/* ── Row 1 — Hero (unchanged) ──────────────────────────────────────── */}
         <Card className="w-full h-[280px] bg-black/[0.96] relative overflow-hidden rounded-xl">
@@ -320,16 +324,15 @@ export default function Home() {
                   'transition-all duration-200',
                   isActive
                     ? [
-                        'bg-white/[0.08]',
-                        'border border-white/[0.16]',
-                        'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)]',
+                        'bg-accent',
+                        'border border-foreground/[0.18]',
+                        'shadow-sm',
                       ]
                     : [
-                        'bg-white/[0.04]',
-                        'border border-white/[0.08]',
-                        'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]',
-                        'hover:bg-white/[0.06]',
-                        'hover:border-white/[0.12]',
+                        'bg-card',
+                        'border border-border',
+                        'hover:bg-accent',
+                        'hover:border-foreground/[0.12]',
                         'hover:-translate-y-0.5',
                       ],
                 )}
@@ -338,7 +341,7 @@ export default function Home() {
                 <Icon
                   className={cn(
                     'w-5 h-5 transition-colors duration-200',
-                    isActive ? 'text-neutral-200' : 'text-neutral-400 group-hover:text-neutral-300',
+                    isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80',
                   )}
                 />
 
@@ -347,7 +350,7 @@ export default function Home() {
                   <div
                     className={cn(
                       'text-[15px] font-medium leading-snug transition-colors duration-200',
-                      isActive ? 'text-white' : 'text-neutral-200',
+                      isActive ? 'text-foreground' : 'text-foreground/90',
                     )}
                   >
                     {mode.label}
@@ -355,7 +358,7 @@ export default function Home() {
                   <div
                     className={cn(
                       'text-[11px] uppercase tracking-[0.15em] mt-1 leading-snug transition-colors duration-200',
-                      isActive ? 'text-neutral-400' : 'text-neutral-500',
+                      isActive ? 'text-muted-foreground' : 'text-muted-foreground/70',
                     )}
                   >
                     {mode.description}
@@ -377,29 +380,29 @@ export default function Home() {
                 {/* Compact At a Glance band */}
                 <div
                   className={cn(
-                    'rounded-xl bg-neutral-900/70 border border-white/[0.06] p-5',
-                    'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]',
+                    'rounded-xl bg-card border border-border p-5',
+                    'shadow-sm',
                   )}
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500 mb-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">
                     At a Glance
                   </p>
                   <div className="flex items-baseline gap-10">
                     {/* Practiced */}
                     <div>
-                      <span className="text-2xl font-semibold text-white tabular-nums leading-none">
+                      <span className="text-2xl font-semibold text-foreground tabular-nums leading-none">
                         {stats.totalAttempted}
                       </span>
-                      <span className="text-[10px] text-neutral-500 ml-2 uppercase tracking-[0.15em]">
+                      <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-[0.15em]">
                         Practiced
                       </span>
                     </div>
                     {/* Accuracy */}
                     <div>
-                      <span className="text-2xl font-semibold text-white tabular-nums leading-none">
+                      <span className="text-2xl font-semibold text-foreground tabular-nums leading-none">
                         {stats.totalAttempted > 0 ? stats.avgAccuracy : 0}%
                       </span>
-                      <span className="text-[10px] text-neutral-500 ml-2 uppercase tracking-[0.15em]">
+                      <span className="text-[10px] text-muted-foreground ml-2 uppercase tracking-[0.15em]">
                         Accuracy
                       </span>
                     </div>
@@ -414,13 +417,13 @@ export default function Home() {
               <div className="space-y-3">
 
                 {/* Study Tools */}
-                <div className="bg-neutral-900/70 rounded-xl border border-white/[0.06] overflow-hidden">
-                  <div className="px-4 pt-4 pb-3 border-b border-white/[0.04]">
+                <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                  <div className="px-4 pt-4 pb-3 border-b border-border">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500">
                       Study Tools
                     </p>
                   </div>
-                  <div className="divide-y divide-white/[0.04]">
+                  <div className="divide-y divide-border">
                     <StudyToolRow
                       icon={XCircle}
                       label="Wrong Answer Journal"
@@ -439,11 +442,11 @@ export default function Home() {
                 {/* Opportunities */}
                 <div
                   className={cn(
-                    'rounded-xl bg-neutral-900/70 border border-white/[0.06] p-5',
-                    'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]',
+                    'rounded-xl bg-card border border-border p-5',
+                    'shadow-sm',
                   )}
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500 mb-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">
                     Opportunities
                   </p>
                   <div className="space-y-3">
@@ -451,9 +454,9 @@ export default function Home() {
                       <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
                           <div className="w-1 h-1 rounded-full bg-neutral-600 shrink-0" />
-                          <span className="text-[13px] text-neutral-300">{trend.label}</span>
+                          <span className="text-[13px] text-foreground/80">{trend.label}</span>
                         </div>
-                        <span className="text-[13px] text-neutral-500 tabular-nums font-medium">
+                        <span className="text-[13px] text-muted-foreground tabular-nums font-medium">
                           {trend.value}
                         </span>
                       </div>
@@ -463,7 +466,7 @@ export default function Home() {
                     variant="ghost"
                     size="sm"
                     onClick={() => navigate('/analytics')}
-                    className="mt-4 text-neutral-600 hover:text-neutral-300 hover:bg-white/[0.04] text-[11px] h-7 px-2.5 -ml-1"
+                    className="mt-4 text-muted-foreground/70 hover:text-foreground hover:bg-accent text-[11px] h-7 px-2.5 -ml-1"
                   >
                     View Full Analytics
                   </Button>

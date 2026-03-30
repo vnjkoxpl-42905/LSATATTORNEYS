@@ -9,6 +9,8 @@ import { getWAJEntries, type WAJEntry, type WAJHistoryItem } from '@/lib/wajServ
 import { questionBank } from '@/lib/questionLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoutButton } from '@/components/LogoutButton';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -29,11 +31,11 @@ function safeHistory(raw: unknown): WAJHistoryItem[] {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Dark label component
+// Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 function IL({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium select-none">
+    <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium select-none">
       {children}
     </span>
   );
@@ -61,7 +63,7 @@ function StatusBadge({ status }: { status: 'wrong' | 'right' }) {
 
 function QTypeBadge({ label }: { label: string }) {
   return (
-    <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium bg-neutral-800 text-neutral-300 ring-1 ring-white/[0.06]">
+    <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium bg-secondary text-foreground/80 ring-1 ring-border">
       {label}
     </span>
   );
@@ -89,7 +91,7 @@ export default function WrongAnswerJournal() {
     if (!user) navigate('/auth');
   }, [user, navigate]);
 
-  // Resolve class_id — guard: if lookup fails, stop loading
+  // Resolve class_id
   React.useEffect(() => {
     if (!user) return;
     const fetchClassId = async () => {
@@ -102,7 +104,6 @@ export default function WrongAnswerJournal() {
         if (student?.class_id) {
           setClassId(student.class_id);
         } else {
-          // No student record — stop loading so page renders the empty state
           setLoading(false);
         }
       } catch {
@@ -145,7 +146,6 @@ export default function WrongAnswerJournal() {
     });
   };
 
-  // Derived filter options — guard against questionBank not loaded
   const allQTypes = React.useMemo(() => {
     try {
       return Array.from(new Set(questionBank.getAllQuestions().map((q) => q.qtype)));
@@ -169,33 +169,30 @@ export default function WrongAnswerJournal() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="min-h-screen bg-background">
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header className="border-b border-white/[0.06] bg-neutral-950/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="px-8 py-4 flex items-center justify-between max-w-6xl mx-auto">
+      <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-10">
+        <div className="px-4 lg:px-8 py-4 flex items-center justify-between max-w-7xl mx-auto">
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 text-neutral-400 hover:text-white hover:bg-white/[0.06] -ml-2"
-            onClick={() => navigate('/')}
+            className="gap-2 text-muted-foreground hover:text-foreground hover:bg-accent -ml-2"
+            onClick={() => navigate('/foyer')}
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Return to Workspace
+            Return to Main Hub
           </Button>
           <IL>Wrong Answer Journal</IL>
+          <LogoutButton />
+          <ThemeToggle />
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-8 py-8 space-y-5">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-5">
 
         {/* ── Filters ──────────────────────────────────────────────────────── */}
-        <div
-          className={cn(
-            'rounded-xl bg-neutral-900/80 border border-white/[0.06] p-4',
-            'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]',
-          )}
-        >
+        <div className="rounded-xl bg-card border border-border shadow-sm p-4">
           <div className="flex items-center gap-3 flex-wrap">
             {/* Question Type */}
             <Select
@@ -204,15 +201,15 @@ export default function WrongAnswerJournal() {
                 setFilters({ ...filters, qtype: v === 'all' ? undefined : v })
               }
             >
-              <SelectTrigger className="w-[190px] h-8 bg-neutral-800 border-neutral-700/80 text-neutral-200 text-[13px] focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger className="w-[190px] h-8 bg-secondary border-border text-foreground text-[13px] focus:ring-0 focus:ring-offset-0">
                 <SelectValue placeholder="All Question Types" />
               </SelectTrigger>
-              <SelectContent className="bg-neutral-900 border-neutral-700/80 text-neutral-200">
-                <SelectItem value="all" className="text-[13px] focus:bg-neutral-800 focus:text-white">
+              <SelectContent className="bg-card border-border text-foreground">
+                <SelectItem value="all" className="text-[13px] focus:bg-accent focus:text-foreground">
                   All Question Types
                 </SelectItem>
                 {allQTypes.map((qt) => (
-                  <SelectItem key={qt} value={qt} className="text-[13px] focus:bg-neutral-800 focus:text-white">
+                  <SelectItem key={qt} value={qt} className="text-[13px] focus:bg-accent focus:text-foreground">
                     {qt}
                   </SelectItem>
                 ))}
@@ -226,15 +223,15 @@ export default function WrongAnswerJournal() {
                 setFilters({ ...filters, level: v === 'all' ? undefined : parseInt(v) })
               }
             >
-              <SelectTrigger className="w-[130px] h-8 bg-neutral-800 border-neutral-700/80 text-neutral-200 text-[13px] focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger className="w-[130px] h-8 bg-secondary border-border text-foreground text-[13px] focus:ring-0 focus:ring-offset-0">
                 <SelectValue placeholder="All Levels" />
               </SelectTrigger>
-              <SelectContent className="bg-neutral-900 border-neutral-700/80 text-neutral-200">
-                <SelectItem value="all" className="text-[13px] focus:bg-neutral-800 focus:text-white">
+              <SelectContent className="bg-card border-border text-foreground">
+                <SelectItem value="all" className="text-[13px] focus:bg-accent focus:text-foreground">
                   All Levels
                 </SelectItem>
                 {allLevels.map((l) => (
-                  <SelectItem key={l} value={l.toString()} className="text-[13px] focus:bg-neutral-800 focus:text-white">
+                  <SelectItem key={l} value={l.toString()} className="text-[13px] focus:bg-accent focus:text-foreground">
                     Level {l}
                   </SelectItem>
                 ))}
@@ -248,15 +245,15 @@ export default function WrongAnswerJournal() {
                 setFilters({ ...filters, pt: v === 'all' ? undefined : parseInt(v) })
               }
             >
-              <SelectTrigger className="w-[120px] h-8 bg-neutral-800 border-neutral-700/80 text-neutral-200 text-[13px] focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger className="w-[120px] h-8 bg-secondary border-border text-foreground text-[13px] focus:ring-0 focus:ring-offset-0">
                 <SelectValue placeholder="All PTs" />
               </SelectTrigger>
-              <SelectContent className="bg-neutral-900 border-neutral-700/80 text-neutral-200">
-                <SelectItem value="all" className="text-[13px] focus:bg-neutral-800 focus:text-white">
+              <SelectContent className="bg-card border-border text-foreground">
+                <SelectItem value="all" className="text-[13px] focus:bg-accent focus:text-foreground">
                   All PTs
                 </SelectItem>
                 {allPTs.map((pt) => (
-                  <SelectItem key={pt} value={pt.toString()} className="text-[13px] focus:bg-neutral-800 focus:text-white">
+                  <SelectItem key={pt} value={pt.toString()} className="text-[13px] focus:bg-accent focus:text-foreground">
                     PT {pt}
                   </SelectItem>
                 ))}
@@ -273,17 +270,17 @@ export default function WrongAnswerJournal() {
                 })
               }
             >
-              <SelectTrigger className="w-[140px] h-8 bg-neutral-800 border-neutral-700/80 text-neutral-200 text-[13px] focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger className="w-[140px] h-8 bg-secondary border-border text-foreground text-[13px] focus:ring-0 focus:ring-offset-0">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
-              <SelectContent className="bg-neutral-900 border-neutral-700/80 text-neutral-200">
-                <SelectItem value="all" className="text-[13px] focus:bg-neutral-800 focus:text-white">
+              <SelectContent className="bg-card border-border text-foreground">
+                <SelectItem value="all" className="text-[13px] focus:bg-accent focus:text-foreground">
                   All Status
                 </SelectItem>
-                <SelectItem value="wrong" className="text-[13px] focus:bg-neutral-800 focus:text-white">
+                <SelectItem value="wrong" className="text-[13px] focus:bg-accent focus:text-foreground">
                   Still Wrong
                 </SelectItem>
-                <SelectItem value="right" className="text-[13px] focus:bg-neutral-800 focus:text-white">
+                <SelectItem value="right" className="text-[13px] focus:bg-accent focus:text-foreground">
                   Now Correct
                 </SelectItem>
               </SelectContent>
@@ -295,7 +292,7 @@ export default function WrongAnswerJournal() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setFilters({})}
-                className="gap-1.5 h-8 text-neutral-500 hover:text-neutral-200 hover:bg-white/[0.05] text-[11px] px-3"
+                className="gap-1.5 h-8 text-muted-foreground hover:text-foreground hover:bg-accent text-[11px] px-3"
               >
                 <RotateCcw className="w-3 h-3" />
                 Clear
@@ -307,18 +304,13 @@ export default function WrongAnswerJournal() {
         {/* ── Entry list ───────────────────────────────────────────────────── */}
         {loading ? (
           <div className="flex flex-col items-center gap-4 py-20">
-            <div className="w-8 h-8 border border-white/10 border-t-white/30 rounded-full animate-spin" />
-            <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-600">Loading</p>
+            <div className="w-8 h-8 border border-border border-t-foreground/30 rounded-full animate-spin" />
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Loading</p>
           </div>
         ) : entries.length === 0 ? (
-          <div
-            className={cn(
-              'rounded-xl bg-neutral-900/60 border border-white/[0.06] p-16',
-              'flex flex-col items-center gap-3 text-center',
-            )}
-          >
-            <p className="text-neutral-300 text-[15px] font-medium">No wrong answers yet</p>
-            <p className="text-neutral-600 text-[13px]">
+          <div className="rounded-xl bg-card border border-border shadow-sm p-16 flex flex-col items-center gap-3 text-center">
+            <p className="text-foreground/80 text-[15px] font-medium">No wrong answers yet</p>
+            <p className="text-muted-foreground text-[13px]">
               {hasFilters
                 ? 'No entries match the current filters.'
                 : 'Keep practicing — your missed questions will appear here.'}
@@ -332,27 +324,26 @@ export default function WrongAnswerJournal() {
                 onClick={() => setSelectedEntry(entry)}
                 className={cn(
                   'group w-full text-left rounded-xl px-4 py-3.5',
-                  'bg-neutral-900/70 border border-white/[0.06]',
-                  'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]',
-                  'hover:bg-neutral-900 hover:border-white/[0.10]',
+                  'bg-card border border-border shadow-sm',
+                  'hover:bg-accent/50 hover:border-border',
                   'transition-all duration-150',
                 )}
               >
                 <div className="flex items-center justify-between gap-4">
                   {/* Left: identity + badges */}
                   <div className="flex items-center gap-3 flex-wrap min-w-0">
-                    <span className="text-[13px] font-mono font-medium text-white shrink-0">
+                    <span className="text-[13px] font-mono font-medium text-foreground shrink-0">
                       PT{entry.pt}–S{entry.section}–Q{entry.qnum}
                     </span>
                     <QTypeBadge label={entry.qtype} />
-                    <span className="text-[11px] text-neutral-500 tabular-nums shrink-0">
+                    <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
                       Lvl {entry.level}
                     </span>
                     <StatusBadge
                       status={entry.last_status === 'right' ? 'right' : 'wrong'}
                     />
                     {entry.revisit_count > 0 && (
-                      <span className="text-[11px] text-neutral-600 shrink-0">
+                      <span className="text-[11px] text-muted-foreground/70 shrink-0">
                         {entry.revisit_count + 1} attempts
                       </span>
                     )}
@@ -365,7 +356,7 @@ export default function WrongAnswerJournal() {
                       e.stopPropagation();
                       handleReattempt(entry);
                     }}
-                    className="shrink-0 h-7 px-3 text-[11px] gap-1.5 bg-white/[0.07] hover:bg-white/[0.12] text-neutral-200 border-0"
+                    className="shrink-0 h-7 px-3 text-[11px] gap-1.5 bg-secondary hover:bg-secondary/80 text-foreground/80 border-0"
                   >
                     <Play className="w-3 h-3" />
                     Reattempt
@@ -379,23 +370,22 @@ export default function WrongAnswerJournal() {
 
       {/* ── Detail Sheet ─────────────────────────────────────────────────────── */}
       <Sheet open={!!selectedEntry} onOpenChange={() => setSelectedEntry(null)}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto bg-neutral-950 border-l border-white/[0.06]">
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto bg-background border-l border-border">
           {selectedEntry && (
             <>
-              <SheetHeader className="pb-4 border-b border-white/[0.06]">
-                <SheetTitle className="text-white font-mono text-[15px]">
+              <SheetHeader className="pb-4 border-b border-border">
+                <SheetTitle className="text-foreground font-mono text-[15px]">
                   PT{selectedEntry.pt}–S{selectedEntry.section}–Q{selectedEntry.qnum}
                 </SheetTitle>
                 <div className="flex items-center gap-2 pt-1">
                   <QTypeBadge label={selectedEntry.qtype} />
-                  <span className="text-[11px] text-neutral-500">Level {selectedEntry.level}</span>
+                  <span className="text-[11px] text-muted-foreground">Level {selectedEntry.level}</span>
                 </div>
               </SheetHeader>
 
               <div className="mt-6 space-y-3">
-                {/* Attempt history */}
                 {safeHistory(selectedEntry.history_json).length === 0 ? (
-                  <p className="text-neutral-500 text-sm py-8 text-center">
+                  <p className="text-muted-foreground text-sm py-8 text-center">
                     No attempt history available.
                   </p>
                 ) : (
@@ -407,16 +397,15 @@ export default function WrongAnswerJournal() {
                       <div
                         key={idx}
                         className={cn(
-                          'rounded-xl border p-4 space-y-3',
-                          'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]',
+                          'rounded-xl border p-4 space-y-3 shadow-sm',
                           isCorrect
                             ? 'bg-emerald-500/[0.06] border-emerald-500/20'
-                            : 'bg-neutral-900/80 border-white/[0.07]',
+                            : 'bg-card border-border',
                         )}
                       >
                         {/* Row: date + result badge */}
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-neutral-500 tabular-nums">
+                          <span className="text-[11px] text-muted-foreground tabular-nums">
                             {histItem.attempt_at_iso
                               ? new Date(histItem.attempt_at_iso).toLocaleString()
                               : '—'}
@@ -428,26 +417,26 @@ export default function WrongAnswerJournal() {
                         <div className="grid grid-cols-2 gap-x-6 gap-y-2">
                           <div>
                             <IL>Chosen</IL>
-                            <div className="text-[13px] text-neutral-200 mt-1 font-mono">
+                            <div className="text-[13px] text-foreground/80 mt-1 font-mono">
                               ({histItem.chosen_answer ?? '—'})
                             </div>
                           </div>
                           <div>
                             <IL>Correct</IL>
-                            <div className="text-[13px] text-neutral-200 mt-1 font-mono">
+                            <div className="text-[13px] text-foreground/80 mt-1 font-mono">
                               ({histItem.correct_answer ?? '—'})
                             </div>
                           </div>
                           <div>
                             <IL>Time</IL>
-                            <div className="text-[13px] text-neutral-200 mt-1 tabular-nums">
+                            <div className="text-[13px] text-foreground/80 mt-1 tabular-nums">
                               {formatTime(histItem.time_ms)}
                             </div>
                           </div>
                           {histItem.confidence_1_5 != null && (
                             <div>
                               <IL>Confidence</IL>
-                              <div className="text-[13px] text-neutral-200 mt-1 tabular-nums">
+                              <div className="text-[13px] text-foreground/80 mt-1 tabular-nums">
                                 {histItem.confidence_1_5} / 5
                               </div>
                             </div>
@@ -456,11 +445,11 @@ export default function WrongAnswerJournal() {
 
                         {/* Review notes */}
                         {histItem.review && (
-                          <div className="pt-3 border-t border-white/[0.06] space-y-3">
+                          <div className="pt-3 border-t border-border space-y-3">
                             {histItem.review.q1 && (
                               <div>
                                 <IL>Why I chose the wrong answer</IL>
-                                <p className="text-[13px] text-neutral-300 mt-1 leading-relaxed">
+                                <p className="text-[13px] text-foreground/80 mt-1 leading-relaxed">
                                   {histItem.review.q1}
                                 </p>
                               </div>
@@ -468,7 +457,7 @@ export default function WrongAnswerJournal() {
                             {histItem.review.q2 && (
                               <div>
                                 <IL>Why I eliminated the right answer</IL>
-                                <p className="text-[13px] text-neutral-300 mt-1 leading-relaxed">
+                                <p className="text-[13px] text-foreground/80 mt-1 leading-relaxed">
                                   {histItem.review.q2}
                                 </p>
                               </div>
@@ -476,7 +465,7 @@ export default function WrongAnswerJournal() {
                             {histItem.review.q3 && (
                               <div>
                                 <IL>Plan to avoid next time</IL>
-                                <p className="text-[13px] text-neutral-300 mt-1 leading-relaxed">
+                                <p className="text-[13px] text-foreground/80 mt-1 leading-relaxed">
                                   {histItem.review.q3}
                                 </p>
                               </div>

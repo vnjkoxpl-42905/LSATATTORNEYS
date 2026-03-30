@@ -26,6 +26,28 @@ export interface WeakAreaAnalysis {
   confidence?: number; // 0-1, how confident we are in this analysis
 }
 
+/** Per question-type mastery level (1–5) and the accuracy data behind it */
+export interface TypeMastery {
+  qtype: string;
+  masteryLevel: number;   // 1–5, the target difficulty tier for this type
+  accuracy: number;       // 0–1, weighted accuracy across all recent attempts
+  attemptsCount: number;
+  isWeak: boolean;        // accuracy < 0.60 — needs focused work
+  isStrong: boolean;      // accuracy >= 0.75 AND masteryLevel >= 4
+}
+
+/** The assembled smart drill composition */
+export interface SmartDrillResult {
+  questions: LRQuestion[];
+  masteryMap: Record<string, TypeMastery>;
+  buckets: {
+    progression: number;  // # of questions in each bucket
+    redemption: number;
+    maintenance: number;
+  };
+  explanation: string;
+}
+
 export class AdaptiveEngine {
   private cooldowns: Map<string, Date> = new Map();
   private recentAttempts: AttemptRecord[] = [];
@@ -349,6 +371,264 @@ export class AdaptiveEngine {
       console.error('Error analyzing weak areas:', err);
       return null;
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Smart Drill — mastery-aware 40/40/20 question assembly
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Calculate per-type mastery levels from the user's attempt history.
+   *
+   * Mastery level (1–5) is derived from weighted accuracy at each difficulty
+   * tier. The target level advances when the user clears >75% at their current
+   * ceiling, and retreats when they fall below 40%.
+   *
+   * Returns a map of qtype → TypeMastery for every type seen in history.
+   */
+  private calculateTypeMastery(
+    attempts: Array<{ qid: string; qtype: string; level: number; correct: boolean; weight: number }>
+  ): Record<string, TypeMastery> {
+    // Group attempts by qtype, then by difficulty level
+    const byType: Record<string, Array<typeof attempts[0]>> = {};
+    for (const a of attempts) {
+      if (!byType[a.qtype]) byType[a.qtype] = [];
+      byType[a.qtype].push(a);
+    }
+
+    const masteryMap: Record<string, TypeMastery> = {};
+
+    for (const [qtype, typeAttempts] of Object.entries(byType)) {
+      // Overall weighted accuracy for this type
+      let totalWeight = 0;
+      let correctWeight = 0;
+      for (const a of typeAttempts) {
+        totalWeight += a.weight;
+        if (a.correct) correctWeight += a.weight;
+      }
+      const overallAccuracy = totalWeight > 0 ? correctWeight / totalWeight : 0;
+
+      // Weighted accuracy broken down by difficulty level (1–5)
+      const levelStats: Record<number, { correct: number; total: number }> = {};
+      for (const a of typeAttempts) {
+        if (!levelStats[a.level]) levelStats[a.level] = { correct: 0, total: 0 };
+        levelStats[a.level].total += a.weight;
+        if (a.correct) levelStats[a.level].correct += a.weight;
+      }
+
+      // Find the highest difficulty where accuracy ≥ 40% (working level)
+      let workingLevel = 1;
+      for (let lvl = 5; lvl >= 1; lvl--) {
+        const stats = levelStats[lvl];
+        if (stats && stats.total > 0) {
+          const acc = stats.correct / stats.total;
+          if (acc >= 0.40) {
+            workingLevel = lvl;
+            break;
+          }
+        }
+      }
+
+      // Advance or retreat the target level based on working-level accuracy
+      const workingStats = levelStats[workingLevel];
+      const workingAccuracy = workingStats && workingStats.total > 0
+        ? workingStats.correct / workingStats.total
+        : overallAccuracy;
+
+      let masteryLevel: number;
+      if (workingAccuracy > 0.75) {
+        // Mastered current level — push to the next
+        masteryLevel = Math.min(5, workingLevel + 1);
+      } else if (workingAccuracy < 0.40) {
+        // Struggling — retreat one tier
+        masteryLevel = Math.max(1, workingLevel - 1);
+      } else {
+        // Solidifying — stay here
+        masteryLevel = workingLevel;
+      }
+
+      masteryMap[qtype] = {
+        qtype,
+        masteryLevel,
+        accuracy: overallAccuracy,
+        attemptsCount: typeAttempts.length,
+        isWeak: overallAccuracy < 0.60,
+        isStrong: overallAccuracy >= 0.75 && masteryLevel >= 4,
+      };
+    }
+
+    return masteryMap;
+  }
+
+  /**
+   * Assemble a smart drill using the 40 / 40 / 20 formula:
+   *
+   *   40% Progression  — unseen questions at the user's mastery level for
+   *                       weak question types (accuracy < 60%)
+   *   40% Redemption   — questions the user has previously gotten wrong,
+   *                       prioritised by the most-missed types
+   *   20% Maintenance  — questions from strong types (accuracy ≥ 75%,
+   *                       mastery level 4–5) to prevent regression
+   *
+   * If any bucket can't fill its quota the remainder is distributed to the
+   * other buckets so the requested `count` is always honoured (within pool
+   * limits).
+   */
+  async generateSmartDrill(
+    userId: string,
+    pool: LRQuestion[],
+    count: number
+  ): Promise<SmartDrillResult> {
+    // ── 1. Pull recent attempt history ──────────────────────────────────────
+    const { data: rawAttempts, error } = await (supabase as any)
+      .from('attempts')
+      .select('qid, qtype, level, correct')
+      .eq('user_id', userId)
+      .order('timestamp_iso', { ascending: false })
+      .limit(300);
+
+    if (error || !rawAttempts || rawAttempts.length === 0) {
+      // No history — fall back to a random sample
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      return {
+        questions: shuffled.slice(0, count),
+        masteryMap: {},
+        buckets: { progression: count, redemption: 0, maintenance: 0 },
+        explanation: 'No history found — returning a random sample to get you started.',
+      };
+    }
+
+    // Exponential decay weight: most recent = 1.0, older → smaller
+    const weighted = rawAttempts.map((a: any, idx: number) => ({
+      ...a,
+      weight: Math.exp(-idx / 80),
+    }));
+
+    // ── 2. Calculate per-type mastery ────────────────────────────────────────
+    const masteryMap = this.calculateTypeMastery(weighted);
+
+    // ── 3. Build lookup sets ─────────────────────────────────────────────────
+    // All qids the user has ever attempted (for "unseen" filtering)
+    const attemptedQids = new Set<string>(rawAttempts.map((a: any) => a.qid));
+
+    // Most-recently-wrong qids (deduplicated, preserving last outcome per qid)
+    const lastOutcomeByQid: Record<string, boolean> = {};
+    for (const a of [...rawAttempts].reverse()) {
+      lastOutcomeByQid[a.qid] = a.correct;
+    }
+    const redemptionQids = new Set<string>(
+      Object.entries(lastOutcomeByQid)
+        .filter(([, correct]) => !correct)
+        .map(([qid]) => qid)
+    );
+
+    // ── 4. Classify pool questions into buckets ──────────────────────────────
+    const weakQTypes = new Set(
+      Object.values(masteryMap)
+        .filter(m => m.isWeak)
+        .map(m => m.qtype)
+    );
+    const strongQTypes = new Set(
+      Object.values(masteryMap)
+        .filter(m => m.isStrong)
+        .map(m => m.qtype)
+    );
+
+    // Progression: unseen questions whose type is weak AND difficulty matches mastery level
+    const progressionPool = pool.filter(q => {
+      if (attemptedQids.has(q.qid)) return false;
+      if (!weakQTypes.has(q.qtype)) return false;
+      const target = masteryMap[q.qtype]?.masteryLevel ?? 2;
+      return q.difficulty === target;
+    });
+
+    // Redemption: previously wrong questions in the pool
+    const redemptionPool = pool.filter(q => redemptionQids.has(q.qid));
+
+    // Maintenance: unseen questions from strong types at difficulty 4–5
+    const maintenancePool = pool.filter(q => {
+      if (attemptedQids.has(q.qid)) return false;
+      if (!strongQTypes.has(q.qtype)) return false;
+      return q.difficulty >= 4;
+    });
+
+    // ── 5. Fill buckets with quota enforcement ───────────────────────────────
+    const target = {
+      progression: Math.round(count * 0.40),
+      redemption:  Math.round(count * 0.40),
+      maintenance: count - Math.round(count * 0.40) - Math.round(count * 0.40),
+    };
+
+    const pick = (src: LRQuestion[], n: number, used: Set<string>): LRQuestion[] => {
+      const eligible = src.filter(q => !used.has(q.qid));
+      const shuffled = eligible.sort(() => Math.random() - 0.5);
+      const picked = shuffled.slice(0, n);
+      picked.forEach(q => used.add(q.qid));
+      return picked;
+    };
+
+    const used = new Set<string>();
+    let progression = pick(progressionPool, target.progression, used);
+    let redemption  = pick(redemptionPool,  target.redemption,  used);
+    let maintenance = pick(maintenancePool, target.maintenance, used);
+
+    // Redistribute any deficit to other buckets using the full pool
+    const deficit = count - progression.length - redemption.length - maintenance.length;
+    if (deficit > 0) {
+      const fallback = pick(pool, deficit, used);
+      // Assign deficit to the bucket that needs it most (proportionally)
+      const progressionDeficit = target.progression - progression.length;
+      const redemptionDeficit  = target.redemption  - redemption.length;
+      const maintenanceDeficit = target.maintenance - maintenance.length;
+      let remaining = [...fallback];
+      if (progressionDeficit > 0) {
+        const take = remaining.splice(0, progressionDeficit);
+        progression = [...progression, ...take];
+      }
+      if (redemptionDeficit > 0 && remaining.length > 0) {
+        const take = remaining.splice(0, redemptionDeficit);
+        redemption = [...redemption, ...take];
+      }
+      if (maintenanceDeficit > 0 && remaining.length > 0) {
+        const take = remaining.splice(0, maintenanceDeficit);
+        maintenance = [...maintenance, ...take];
+      }
+      // Any still-remaining go to progression
+      progression = [...progression, ...remaining];
+    }
+
+    // ── 6. Merge, shuffle, return ────────────────────────────────────────────
+    const merged = [...progression, ...redemption, ...maintenance];
+    for (let i = merged.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [merged[i], merged[j]] = [merged[j], merged[i]];
+    }
+
+    // Build human-readable explanation
+    const weakList = [...weakQTypes].slice(0, 3).join(', ') || 'none identified';
+    const dominantLevel = Object.values(masteryMap).length > 0
+      ? Math.round(
+          Object.values(masteryMap).reduce((s, m) => s + m.masteryLevel, 0) /
+          Object.values(masteryMap).length
+        )
+      : 2;
+    const explanation =
+      `${merged.length}-question smart drill: ` +
+      `${progression.length} progression (new ${weakList} questions at level ${dominantLevel}), ` +
+      `${redemption.length} redemption (previously missed), ` +
+      `${maintenance.length} maintenance (strong types at L4–5). ` +
+      `Based on ${rawAttempts.length} attempts.`;
+
+    return {
+      questions: merged.slice(0, count),
+      masteryMap,
+      buckets: {
+        progression: progression.length,
+        redemption:  redemption.length,
+        maintenance: maintenance.length,
+      },
+      explanation,
+    };
   }
 
   /**
