@@ -8,6 +8,7 @@ import { Flag, Trash2, Play, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { questionBank } from '@/lib/questionLoader';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoutButton } from '@/components/LogoutButton';
 
 interface FlaggedQuestion {
   id: string;
@@ -95,16 +96,17 @@ export default function FlaggedQuestions() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b">
-        <div className="container mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/foyer')}
+                className="gap-2"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
+                <ArrowLeft className="w-4 h-4" />
+                Return to Main Hub
               </Button>
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -116,13 +118,14 @@ export default function FlaggedQuestions() {
                 </p>
               </div>
             </div>
+            <LogoutButton />
             <ThemeToggle />
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         {flaggedQuestions.length === 0 ? (
           <Card className="p-12 text-center">
             <Flag className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />

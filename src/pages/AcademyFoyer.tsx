@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import WelcomeLoading from "@/components/WelcomeLoading";
 import OrbitalHub, { FoyerPhase, FoyerNode } from "@/components/foyer/OrbitalHub";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LogoutButton } from "@/components/LogoutButton";
 
 export default function AcademyFoyer() {
   const navigate  = useNavigate();
@@ -102,8 +103,9 @@ export default function AcademyFoyer() {
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
 
-      {/* ── Theme toggle — top-right corner ── */}
-      <div className="absolute top-6 right-6 z-30">
+      {/* ── Top-right controls ── */}
+      <div className="absolute top-5 right-6 z-30 flex items-center gap-1">
+        <LogoutButton />
         <ThemeToggle />
       </div>
 

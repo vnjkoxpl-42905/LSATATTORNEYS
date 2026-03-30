@@ -720,19 +720,28 @@ export function QuestionPicker({ manifest, onStartDrill, onCancel }: QuestionPic
                 </Button>
               )}
               
-              <Button
-                onClick={handleCreateSet}
-                disabled={selectedQids.size === 0 && filters.questionTypes.length === 0}
-                className="min-w-[140px]"
-              >
-                {selectedQids.size > 0 ? (
-                  <>Create Set ({selectedQids.size})</>
-                ) : filters.questionTypes.length > 0 ? (
-                  <>Create Set (10 random)</>
-                ) : (
-                  <>Create Set</>
-                )}
-              </Button>
+              {(() => {
+                const zeroState = selectedQids.size === 0 && filters.questionTypes.length > 0 && filteredQuestions.length === 0;
+                const noSelection = selectedQids.size === 0 && filters.questionTypes.length === 0;
+                return (
+                  <Button
+                    onClick={handleCreateSet}
+                    disabled={noSelection || zeroState}
+                    className={cn(
+                      "min-w-[180px] transition-colors",
+                      zeroState && "bg-muted text-muted-foreground cursor-not-allowed"
+                    )}
+                  >
+                    {zeroState
+                      ? '0 Questions Match Filters'
+                      : selectedQids.size > 0
+                      ? `Start Drill (${selectedQids.size} Questions)`
+                      : filters.questionTypes.length > 0
+                      ? `Start Drill (${Math.min(10, filteredQuestions.length)} Questions)`
+                      : 'Create Set'}
+                  </Button>
+                );
+              })()}
             </div>
           </div>
         </div>

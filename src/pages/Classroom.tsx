@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, ClipboardList, RotateCcw, Flag, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoutButton } from '@/components/LogoutButton';
 import {
   MOCK_ASSIGNMENTS,
   MOCK_MATERIALS,
@@ -536,7 +537,58 @@ function ReviewTab() {
 // Tab definition
 // ─────────────────────────────────────────────────────────────────────────────
 
-type TabId = 'overview' | 'assignments' | 'materials' | 'submissions' | 'feedback' | 'review';
+// ─────────────────────────────────────────────────────────────────────────────
+// Bootcamps tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BootcampsTab: React.FC = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="space-y-6">
+      <div>
+        <IL>Featured Bootcamp</IL>
+        <p className="text-xs text-muted-foreground mt-1">Focused skill drills built into your classroom.</p>
+      </div>
+
+      {/* Causation Station Card */}
+      <div className="rounded-xl bg-card border border-border shadow-sm p-6 flex flex-col sm:flex-row gap-6 items-start">
+        <div className="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center flex-shrink-0">
+          <span className="text-xl">⚗️</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Causation Station</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-xl leading-relaxed">
+                A focused bootcamp to master causal reasoning — one of the most frequently tested skills on the LSAT. Train across 4 progressive modules: spot causation vs. correlation, identify alternate explanations, test relationships, and apply skills to real LSAT questions.
+              </p>
+              <div className="flex items-center gap-4 mt-3">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">4 Modules</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">76 Questions</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Flashcards + Journal</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={() => navigate('/bootcamp/causation-station')}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background text-sm font-medium px-4 py-2 hover:bg-foreground/90 transition-colors duration-150"
+            >
+              Launch Bootcamp
+              <span className="ml-1">→</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab definition
+// ─────────────────────────────────────────────────────────────────────────────
+
+type TabId = 'overview' | 'assignments' | 'materials' | 'submissions' | 'feedback' | 'review' | 'bootcamps';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'overview',     label: 'Overview' },
@@ -545,6 +597,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'submissions',  label: 'Submissions' },
   { id: 'feedback',     label: 'Feedback' },
   { id: 'review',       label: 'Review Tools' },
+  { id: 'bootcamps',    label: 'Bootcamps' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -569,22 +622,23 @@ export default function Classroom() {
 
       {/* ── Sticky header ───────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="px-8 py-4 flex items-center justify-between max-w-5xl mx-auto">
+        <div className="px-4 lg:px-8 py-4 flex items-center justify-between max-w-7xl mx-auto">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/foyer')}
             className="gap-2 text-muted-foreground hover:text-foreground hover:bg-accent -ml-2"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Return to Workspace
+            Return to Main Hub
           </Button>
           <IL>Classroom</IL>
+          <LogoutButton />
           <ThemeToggle />
         </div>
 
         {/* ── Tab bar ──────────────────────────────────────────────────────── */}
-        <div className="px-8 max-w-5xl mx-auto flex items-end gap-1 overflow-x-auto scrollbar-none">
+        <div className="px-4 lg:px-8 max-w-7xl mx-auto flex items-end gap-1 overflow-x-auto scrollbar-none">
           {TABS.map(tab => (
             <button
               key={tab.id}
@@ -611,13 +665,14 @@ export default function Classroom() {
       </header>
 
       {/* ── Content ─────────────────────────────────────────────────────────── */}
-      <main className="max-w-5xl mx-auto px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         {activeTab === 'overview'    && <OverviewTab onTabChange={(t) => setActiveTab(t as TabId)} />}
         {activeTab === 'assignments' && <AssignmentsTab />}
         {activeTab === 'materials'   && <MaterialsTab />}
         {activeTab === 'submissions' && <SubmissionsTab />}
         {activeTab === 'feedback'    && <FeedbackTab />}
         {activeTab === 'review'      && <ReviewTab />}
+        {activeTab === 'bootcamps'   && <BootcampsTab />}
       </main>
     </div>
   );

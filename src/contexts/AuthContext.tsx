@@ -41,12 +41,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Ensure a students row exists for this auth user so class_id is always resolvable
+    const provisionStudentRecord = async (userId: string) => {
+      const { data: existing } = await supabase
+        .from('students')
+        .select('class_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!existing) {
+        // Create the record — use the auth UUID as both class_id and token_hash
+        await supabase.from('students').insert({
+          user_id: userId,
+          class_id: userId,
+          token_hash: userId,
+        });
+      }
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        if (session?.user) {
+          provisionStudentRecord(session.user.id);
+        }
       }
     );
 
@@ -55,6 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user) {
+        provisionStudentRecord(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();

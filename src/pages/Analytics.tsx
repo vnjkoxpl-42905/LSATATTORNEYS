@@ -9,6 +9,7 @@ import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoutButton } from '@/components/LogoutButton';
 
 interface AnalyticsData {
   accuracyByType: Record<string, { correct: number; total: number; accuracy: number }>;
@@ -198,22 +199,23 @@ const Analytics = () => {
 
       {/* Header */}
       <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="px-8 py-4 flex items-center justify-between max-w-6xl mx-auto">
+        <div className="px-4 lg:px-8 py-4 flex items-center justify-between max-w-7xl mx-auto">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/foyer')}
             className="gap-2 text-muted-foreground hover:text-foreground hover:bg-accent -ml-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            Return to Main Hub
           </Button>
           <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-medium">Analytics</p>
+          <LogoutButton />
           <ThemeToggle />
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-8 pt-8 pb-16">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-8 pb-16">
         {!hasData ? (
           <div className="rounded-xl bg-card border border-border shadow-sm p-12 text-center">
             <p className="text-muted-foreground text-sm">No data yet for this period</p>

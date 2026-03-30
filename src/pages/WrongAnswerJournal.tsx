@@ -10,6 +10,7 @@ import { questionBank } from '@/lib/questionLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoutButton } from '@/components/LogoutButton';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -172,22 +173,23 @@ export default function WrongAnswerJournal() {
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="px-8 py-4 flex items-center justify-between max-w-6xl mx-auto">
+        <div className="px-4 lg:px-8 py-4 flex items-center justify-between max-w-7xl mx-auto">
           <Button
             variant="ghost"
             size="sm"
             className="gap-2 text-muted-foreground hover:text-foreground hover:bg-accent -ml-2"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/foyer')}
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Return to Workspace
+            Return to Main Hub
           </Button>
           <IL>Wrong Answer Journal</IL>
+          <LogoutButton />
           <ThemeToggle />
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-8 py-8 space-y-5">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-5">
 
         {/* ── Filters ──────────────────────────────────────────────────────── */}
         <div className="rounded-xl bg-card border border-border shadow-sm p-4">

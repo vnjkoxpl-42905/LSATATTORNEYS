@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import type { TypeDrillConfig } from '@/types/drill';
 import type { QuestionManifest } from '@/lib/questionLoader';
 import { questionBank } from '@/lib/questionLoader';
-import { AdaptiveEngine, type WeakAreaAnalysis } from '@/lib/adaptiveEngine';
+import { AdaptiveEngine, type WeakAreaAnalysis, type TypeMastery } from '@/lib/adaptiveEngine';
 import { templateService } from '@/lib/templateService';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,6 +42,7 @@ export function TypeDrillPicker({ manifest, onStartDrill, onCancel }: TypeDrillP
   const [setSize, setSetSize] = useState(10);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<WeakAreaAnalysis | null>(null);
+  const [smartMastery, setSmartMastery] = useState<Record<string, TypeMastery> | null>(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [showZeroCount, setShowZeroCount] = useState(false);
@@ -103,6 +104,15 @@ export function TypeDrillPicker({ manifest, onStartDrill, onCancel }: TypeDrillP
 
   const availableDifficulties = getAvailableDifficulties();
   const availablePTs = getAvailablePTs();
+
+  // Live count of questions matching all current filters
+  const matchingCount = useMemo(() => {
+    return questionBank.getQuestionsByFilter({
+      qtypes: selectedQTypes.length > 0 ? selectedQTypes : undefined,
+      difficulties: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
+      pts: selectedPTs.length > 0 ? selectedPTs : undefined,
+    }).length;
+  }, [selectedQTypes, selectedDifficulties, selectedPTs]);
 
   // Handlers
   const toggleQType = (qtype: string) => {
@@ -172,45 +182,36 @@ export function TypeDrillPicker({ manifest, onStartDrill, onCancel }: TypeDrillP
 
   const handleSmartBuild = async () => {
     if (!user) return;
-    
+
     setIsAnalyzing(true);
-    
+
     try {
-      const analysis = await adaptiveEngine.analyzeWeakAreas(user.id);
-      
-      if (!analysis) {
+      const allQuestions = questionBank.getAllQuestions();
+      const result = await adaptiveEngine.generateSmartDrill(user.id, allQuestions, 20);
+
+      if (result.questions.length === 0) {
         toast({
           title: "Not enough data",
-          description: "Complete at least 10 questions to use Smart Build. The more you practice, the smarter the recommendations!",
+          description: "Complete at least a few questions to use Smart Build. The more you practice, the smarter the recommendations!",
           variant: "destructive",
         });
-        setIsAnalyzing(false);
         return;
       }
 
-      setAnalysisResult(analysis);
-      
-      // Auto-populate selections based on analysis
-      if (analysis.weakQTypes.length > 0) {
-        setSelectedQTypes(analysis.weakQTypes);
-      } else {
-        // If no specific weak types, select a diverse set
-        const diverseTypes = QUESTION_TYPES.slice(0, 5).map(t => t.id);
-        setSelectedQTypes(diverseTypes);
-      }
-      
-      setSelectedDifficulties(analysis.weakDifficulties);
-      setSetSize(analysis.recommendedSize);
-      
-      // Auto-advance to step 2
-      setCurrentStep(2);
-      
-      const confidenceEmoji = (analysis.confidence || 0.5) > 0.8 ? '🎯' : 
-                            (analysis.confidence || 0.5) > 0.6 ? '📊' : '💡';
-      
+      setSmartMastery(result.masteryMap);
+
+      // Launch immediately with the pre-selected question IDs
+      onStartDrill({
+        qtypes: [],
+        difficulties: [],
+        pts: [],
+        count: result.questions.length,
+        selectedQids: result.questions.map(q => q.qid),
+      });
+
       toast({
-        title: `${confidenceEmoji} Smart drill built!`,
-        description: analysis.explanation,
+        title: '🎯 Smart Drill ready!',
+        description: result.explanation,
         duration: 5000,
       });
     } catch (err) {
@@ -758,13 +759,28 @@ export function TypeDrillPicker({ manifest, onStartDrill, onCancel }: TypeDrillP
             Step {currentStep} of 3
           </div>
 
-          <Button
-            onClick={handleNext}
-            disabled={!canProceed(currentStep)}
-          >
-            {currentStep === 3 ? 'Build drill' : 'Next'}
-            {currentStep < 3 && <ChevronRight className="w-4 h-4 ml-1" />}
-          </Button>
+          {currentStep === 3 ? (
+            <Button
+              onClick={handleNext}
+              disabled={!canProceed(currentStep) || matchingCount === 0}
+              className={cn(
+                "min-w-[200px] transition-colors",
+                matchingCount === 0 && "bg-muted text-muted-foreground cursor-not-allowed"
+              )}
+            >
+              {matchingCount === 0
+                ? '0 Questions Match — Adjust Selection'
+                : `Start Drill (${Math.min(setSize, matchingCount)} Questions)`}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleNext}
+              disabled={!canProceed(currentStep)}
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          )}
         </div>
       </div>
     </div>

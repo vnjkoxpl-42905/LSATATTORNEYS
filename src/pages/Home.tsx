@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoutButton } from '@/components/LogoutButton';
 import type { DrillMode, FullSectionConfig, TypeDrillConfig } from '@/types/drill';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -222,7 +223,7 @@ export default function Home() {
 
       {/* ── Header — minimal, no branding ──────────────────────────────────── */}
       <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="px-8 py-4 flex items-center justify-between max-w-6xl mx-auto">
+        <div className="px-4 lg:px-8 py-4 flex items-center justify-between max-w-7xl mx-auto">
           <div>
             <h2 className="text-sm font-medium text-foreground">
               Welcome back, {getFirstName()}
@@ -237,6 +238,7 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <LogoutButton />
             <ThemeToggle />
             <Button
               variant="ghost"
@@ -272,7 +274,7 @@ export default function Home() {
       </header>
 
       {/* ── Canvas ─────────────────────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-8 pt-8 pb-16 animate-fade-in">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-8 pb-16 animate-fade-in">
 
         {/* ── Row 1 — Hero (unchanged) ──────────────────────────────────────── */}
         <Card className="w-full h-[280px] bg-black/[0.96] relative overflow-hidden rounded-xl">
