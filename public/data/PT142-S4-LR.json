@@ -1,0 +1,444 @@
+[
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 1,
+    "questionType": "Misinterpretation",
+    "questionDifficulty": 1,
+    "stimulus": "Ming: Since trans fat is particularly unhealthy, it\u2019s fortunate for the consumer that so many cookie manufacturers have completely eliminated it from their products.\nCarol: Why do you say that? Even without trans fat, desserts do not make for healthy eating.",
+    "questionStem": "Carol\u2019s response indicates that she interpreted Ming\u2019s remarks to mean that",
+    "answerChoices": {
+      "A": "the more trans fat a cookie contains, the more unhealthy it is",
+      "B": "food that doesn\u2019t contain trans fat is healthy food",
+      "C": "if a food is not healthy, then it is unhealthy",
+      "D": "a cookie containing any amount of trans fat is unhealthy",
+      "E": "consumers should purchase cookies only if they do not contain trans fat"
+    },
+    "correctAnswer": "B"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 2,
+    "questionType": "Identify The Conclusion",
+    "questionDifficulty": 1,
+    "stimulus": "Historian: During the Industrial Revolution, for the first time in history, the productivity of the economy grew at a faster rate than the population and thus dramatically improved living standards. An economist theorizes that this growth was made possible by the spread of values such as hard work and thrift. But successful explanations need to be based on facts, so no one should accept this explanation until historical evidence demonstrates that a change in values occurred prior to the Industrial Revolution.",
+    "questionStem": "The overall conclusion of the historian\u2019s argument is that",
+    "answerChoices": {
+      "A": "during the Industrial Revolution the productivity of the economy grew at a faster rate than the population",
+      "B": "the fact that the productivity of the economy grew at a faster rate than the population during the Industrial Revolution led to a dramatic improvement in living standards",
+      "C": "no one should accept the economist\u2019s explanation until historical evidence demonstrates that a change in values occurred prior to the Industrial Revolution",
+      "D": "the improvement in living standards that occurred during the Industrial Revolution was not due to the spread of a change in values",
+      "E": "values such as hard work and thrift did not become widespread prior to the Industrial Revolution"
+    },
+    "correctAnswer": "C"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 3,
+    "questionType": "Strengthen",
+    "questionDifficulty": 1,
+    "stimulus": "The master plan for the new park calls for the planting of trees of any species native to this area, except for those native trees that grow to be very large, such as the cottonwood. The trees that the community group donated were purchased at Three Rivers Nursery, which sells mostly native trees and shrubs. Thus, the donated trees are probably consistent with the master plan.",
+    "questionStem": "Which one of the following, if true, most strengthens the argument?",
+    "answerChoices": {
+      "A": "Some tree species that grow to be very large are consistent with the master plan.",
+      "B": "Three Rivers Nursery sells cottonwood trees.",
+      "C": "Many of the native species that Three Rivers Nursery sells are shrubs, not trees.",
+      "D": "Tree species that are not native to this area and that are consistent with the master plan are rare and hard to find.",
+      "E": "Three Rivers Nursery does not sell any tree species that grow to be very large."
+    },
+    "correctAnswer": "E"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 4,
+    "questionType": "Necessary Assumption",
+    "questionDifficulty": 2,
+    "stimulus": "Paleontologists had long supposed that the dinosaur Diplodocus browsed for high-growing vegetation such as treetop leaves by raising its very long neck. But now computer models have shown that the structure of Diplodocus\u2019s neck bones would have prevented such movement. The neck could, however, bend downward and even extend below ground level, allowing Diplodocus to access underwater vegetation from dry land. Thus, Diplodocus must have fed on plants on or near the ground, or underwater.",
+    "questionStem": "Which one of the following is an assumption required by the argument?",
+    "answerChoices": {
+      "A": "The same type of neck structure is found in modern ground-feeding animals.",
+      "B": "Diplodocus was not able to see in front of itself unless its head was angled steeply downward.",
+      "C": "It would be impossible for a large animal such as Diplodocus to supply blood to an elevated brain.",
+      "D": "Diplodocus had no other way of accessing high-growing vegetation, such as by rising up on its hind legs.",
+      "E": "Diplodocus was not able to browse for underwater vegetation by kneeling beside bodies of water or by walking into them."
+    },
+    "correctAnswer": "D"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 5,
+    "questionType": "Principle Justify",
+    "questionDifficulty": 1,
+    "stimulus": "Government official: Although the determination of local residents to rebuild hiking trails recently devastated by a landslide indicates that they are strongly committed to their community, the government should not assist them in rebuilding. The reason is clear: there is a strong likelihood of future landslides in that location that could cause serious injury or worse.",
+    "questionStem": "Which one of the following principles, if valid, most helps to justify the reasoning in the government official\u2019s argument?",
+    "answerChoices": {
+      "A": "Residents should not be allowed to rebuild trails unless the government assists them in rebuilding.",
+      "B": "The determination of residents to rebuild hiking trails devastated by landslides should be what determines government support for the project.",
+      "C": "Government agencies should not assist people with projects unless those people are strongly committed to their community.",
+      "D": "The government should not assist in projects that are very likely to result in circumstances that could lead to serious injury.",
+      "E": "Residents should be discouraged from rebuilding in any area that has had an extensive history of landslides."
+    },
+    "correctAnswer": "D"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 6,
+    "questionType": "Necessary Assumption",
+    "questionDifficulty": 1,
+    "stimulus": "Scientist: There is a lot of concern that human behavior may be responsible for large-scale climate change. But this should be seen as more of an opportunity than a problem. If human behavior is responsible for climate change, then we can control future climate change to make it less extreme than previous climate shifts.",
+    "questionStem": "The scientist\u2019s argument requires assuming which one of the following?",
+    "answerChoices": {
+      "A": "The same degree of climate change produces less damage if it is caused by human behavior than if it has a purely natural cause.",
+      "B": "Human beings can control the aspects of their behavior that have an impact on climate change.",
+      "C": "At least some previous large-scale climate changes have been caused by human behavior.",
+      "D": "Large-scale climate change poses a greater danger to human beings than to other species.",
+      "E": "It is easier to identify the human behaviors that cause climate change than it is to change those behaviors."
+    },
+    "correctAnswer": "B"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 7,
+    "questionType": "Complete the Argument",
+    "questionDifficulty": 3,
+    "stimulus": "In a study of heart patients awaiting treatment for reduced blood flow to the heart, those still waiting to find out whether they would need surgery were less likely to experience pain from the condition than were those who knew what type of treatment they would receive. Assuming that this uncertainty is more stressful than knowing what one\u2019s future holds, then it is reasonable to conclude that _______.",
+    "questionStem": "Which one of the following most logically completes the argument?",
+    "answerChoices": {
+      "A": "stress sometimes reduces the amount of pain a heart patient experiences",
+      "B": "the pain experienced by heart patients is to some extent beneficial",
+      "C": "the severity of a heart patient\u2019s condition is usually worsened by withholding information from the patient about the treatment that that patient will receive",
+      "D": "stress is probably an effect rather than a cause of reduced blood flow to the heart",
+      "E": "heart patients suffering from reduced blood flow to the heart who are experiencing pain from the condition are more likely to require surgery than are such patients who are not experiencing pain"
+    },
+    "correctAnswer": "A"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 8,
+    "questionType": "Flawed Reasoning",
+    "questionDifficulty": 1,
+    "stimulus": "Given the shape of the hip and foot bones of the Kodiak bear, it has been determined that standing and walking upright is completely natural behavior for these bears. Thus, walking on hind legs is instinctive and not a learned behavior of the Kodiak.",
+    "questionStem": "To which one of the following criticisms is the argument most vulnerable?",
+    "answerChoices": {
+      "A": "The argument incorrectly generalizes from the behavior of a few bears in support of its conclusion.",
+      "B": "The argument fails to consider the possibility that walking on hind legs is the result of both learning and an innate capacity.",
+      "C": "The word \u201cbehavior\u201d illicitly changes meaning during the course of the argument.",
+      "D": "The argument presumes, without giving justification, that all behavior can be explained in one or both of only two ways.",
+      "E": "The argument incorrectly appeals to the authority of science in order to support its conclusion."
+    },
+    "correctAnswer": "B"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 9,
+    "questionType": "Paradox",
+    "questionDifficulty": 4,
+    "stimulus": "People are usually interested in, and often even moved by, anecdotes about individuals, whereas they rarely even pay attention to statistical information, much less change their beliefs in response to it. However, although anecdotes are generally misleading in that they are about unrepresentative cases, people tend to have fairly accurate beliefs about society.",
+    "questionStem": "Which one of the following, if true, would most help to explain why people tend to have accurate beliefs about society despite the facts described above?",
+    "answerChoices": {
+      "A": "Statistical information tends to obscure the characteristics of individuals.",
+      "B": "Most people recognize that anecdotes tend to be about unrepresentative cases.",
+      "C": "The more emotionally compelling an anecdote is, the more likely it is to change a person\u2019s beliefs.",
+      "D": "Statistical information is made more comprehensible when illustrated by anecdotes.",
+      "E": "People tend to base their beliefs about other people on their emotional response to those people."
+    },
+    "correctAnswer": "B"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 10,
+    "questionType": "Argument Evaluation",
+    "questionDifficulty": 1,
+    "stimulus": "In 2005, paleontologist Mary Schweitzer made headlines when she reported finding preserved soft tissue in the bones of a Tyrannosaurus rex dinosaur. Analysis of the collagen proteins from the T. rex showed them to be similar to the collagen proteins in modern-day chickens. Schweitzer\u2019s discovery therefore adds to the mountain of evidence that dinosaurs are closely related to birds.",
+    "questionStem": "The answer to which one of the following questions would be most useful to know in order to evaluate the argument?",
+    "answerChoices": {
+      "A": "How rare is it to find preserved soft tissue in the bones of a dinosaur?",
+      "B": "Is there any evidence at all against the claim that dinosaurs are closely related to birds?",
+      "C": "How likely is it for animals that are not closely related to each other to have similar collagen proteins?",
+      "D": "Is it possible that T. rex is more closely related to modern-day chickens than to certain other types of dinosaurs?",
+      "E": "Before Schweitzer\u2019s discovery, did researchers suppose that the collagen proteins in T. rex and chickens might be similar?"
+    },
+    "correctAnswer": "C"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 11,
+    "questionType": "Most Strongly Supported",
+    "questionDifficulty": 3,
+    "stimulus": "A university professor researching sleep disorders occasionally taught class after spending whole nights working in a laboratory. She found lecturing after such nights difficult: she reported that she felt worn out and humorless, and she had difficulty concentrating and finding the appropriate words. After several weeks of lectures, she asked her students to guess which lectures had been given after nights without sleep. Interestingly, very few students were able to correctly identify them.",
+    "questionStem": "Which one of the following statements is most strongly supported by the information above?",
+    "answerChoices": {
+      "A": "The subjective effects of occasional sleep deprivation are more pronounced than are its effects on overt behavior.",
+      "B": "No one can assess the overall effects of sleep deprivation on a particular person as well as that sleep-deprived person can.",
+      "C": "Sleep deprivation has less effect on professors\u2019 job performance than it does on the job performance of others.",
+      "D": "Occasional sleep deprivation is not as debilitating as extended sleep deprivation.",
+      "E": "University students in a lecture audience tend to be astute observers of human behavior."
+    },
+    "correctAnswer": "A"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 12,
+    "questionType": "Principle Justify",
+    "questionDifficulty": 2,
+    "stimulus": "Prime minister: Our nation\u2019s government should give priority to satisfying the needs of our nation\u2019s people over satisfying the needs of people of any other nation. This is despite the fact that the people of other nations are equal in worth to the people of our nation, which means that it is objectively no more important to satisfy the needs of our nation\u2019s people than to satisfy those of other nations\u2019 people.",
+    "questionStem": "Which one of the following principles, if valid, most helps to reconcile the apparent conflict among the prime minister\u2019s claims?",
+    "answerChoices": {
+      "A": "A nation\u2019s government should not attempt to satisfy the needs of a group of people unless the satisfaction of those people\u2019s needs is objectively more important than that of any other group\u2019s needs.",
+      "B": "A nation\u2019s government should give priority to satisfying the needs of its own people over satisfying the needs of another nation\u2019s people only if its own people are more worthy than the other nation\u2019s people.",
+      "C": "The priority a nation\u2019s government should place on satisfying the needs of a group of people depends mainly on how objectively important it is for the needs of those people to be satisfied.",
+      "D": "When the people of two nations are equally worthy, the needs of the people of each of those nations should be satisfied primarily by the people\u2019s own governments.",
+      "E": "A nation\u2019s government should give priority to the satisfaction of the needs of a group of people if, but only if, there is no other way for that group\u2019s needs to be satisfied."
+    },
+    "correctAnswer": "D"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 13,
+    "questionType": "Must Be True",
+    "questionDifficulty": 2,
+    "stimulus": "Mayor: To keep our neighborhoods clean, every street in town will be swept at least once a month. If a neighborhood needs more frequent sweepings, due to excessive dirt from major construction for example, that neighborhood will be qualified for interim sweepings. All requests for interim sweepings from qualified neighborhoods will be satisfied immediately.",
+    "questionStem": "If all of the mayor\u2019s statements are true, then which one of the following must also be true?",
+    "answerChoices": {
+      "A": "All neighborhoods in which construction is under way are qualified neighborhoods.",
+      "B": "All qualified neighborhoods will get their streets swept more than once a month.",
+      "C": "No street will be swept more than once a month unless it is located in a qualified neighborhood.",
+      "D": "A qualified neighborhood that requests an interim sweeping will have its streets swept more than once a month.",
+      "E": "No street in an unqualified neighborhood will be swept more than once a month even if the neighborhood requests it."
+    },
+    "correctAnswer": "D"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 14,
+    "questionType": "Method of Reasoning",
+    "questionDifficulty": 3,
+    "stimulus": "Journalist: It is unethical for journalists to lie\u2014to say something untrue with the purpose of deceiving the listener\u2014to get a story. However, journalists commonly withhold relevant information in interviews in order to elicit new information. Some argue that this, like lying, is intentional deception and therefore unethical. However, this argument fails to recognize the distinction between failing to prevent a false belief and actively encouraging one. Lying is unethical because it actively encourages a false belief.",
+    "questionStem": "The journalist argues by",
+    "answerChoices": {
+      "A": "pointing out a difference between the two cases being compared in order to show that a conclusion based on their similarities should not be drawn",
+      "B": "defending what the journalist considers a controversial distinction by offering an example of a clear instance of it",
+      "C": "defining a concept and then showing that under this definition the concept applies to all of the cases under discussion",
+      "D": "appealing to a counterexample to undermine an ethical principle that supports an argument the journalist is trying to refute",
+      "E": "clarifying and defending a moral principle by comparing a case in which it applies to one in which it does not apply"
+    },
+    "correctAnswer": "A"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 15,
+    "questionType": "Flawed Reasoning",
+    "questionDifficulty": 4,
+    "stimulus": "Economist: Many of my colleagues are arguing that interest rates should be further lowered in order to stimulate economic growth. However, no such stimulation is needed: the economy is already growing at a sustainable rate. So, currently there is no reason to lower interest rates further.",
+    "questionStem": "The reasoning in the economist\u2019s argument is questionable in that the argument",
+    "answerChoices": {
+      "A": "relies solely on the testimony of experts",
+      "B": "confuses economic growth with what stimulates it",
+      "C": "presumes that a need to stimulate economic growth is the only possible reason to lower interest rates now",
+      "D": "takes what is merely one way of stimulating economic growth to be the only way of stimulating economic growth",
+      "E": "concludes that a further reduction of interest rates would lead to unsustainable economic growth merely from the fact that the economy is already growing at a sustainable rate"
+    },
+    "correctAnswer": "C"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 16,
+    "questionType": "Sufficient Assumption",
+    "questionDifficulty": 3,
+    "stimulus": "Most commentators on Baroque painting consider Caravaggio an early practitioner of that style, believing that his realism and novel use of the interplay of light and shadow broke sharply with current styles of Caravaggio\u2019s time and significantly influenced seventeenth-century Baroque painting. One must therefore either abandon the opinion of this majority of commentators or reject Mather\u2019s definition of Baroque painting, which says that for any painting to be considered Baroque, it must display opulence, heroic sweep, and extravagance.",
+    "questionStem": "The conclusion of the argument can be properly drawn if which one of the following is assumed?",
+    "answerChoices": {
+      "A": "Paintings that belong to a single historical period typically share many of the same stylistic features.",
+      "B": "A painter who makes use of the interplay of light and shadow need not for that reason be considered a nonrealistic painter.",
+      "C": "Realism was not widely used by painters prior to the seventeenth century.",
+      "D": "A realistic painting usually does not depict the world as opulent, heroic, or extravagant.",
+      "E": "Opulence, heroic sweep, and extravagance are not present in Caravaggio\u2019s paintings."
+    },
+    "correctAnswer": "E"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 17,
+    "questionType": "Method of Reasoning",
+    "questionDifficulty": 3,
+    "stimulus": "Under the legal doctrine of jury nullification, a jury may legitimately acquit a defendant it believes violated a law if the jury believes that law to be unjust. Proponents argue that this practice is legitimate because it helps shield against injustice. But the doctrine relies excessively on jurors\u2019 objectivity. When juries are empowered to acquit on grounds of their perceptions of unfairness, they too often make serious mistakes.",
+    "questionStem": "The argument uses which one of the following techniques in its attempt to undermine the position that it attributes to the proponents of jury nullification?",
+    "answerChoices": {
+      "A": "attacking the motives of the proponents of the doctrine",
+      "B": "identifying an inconsistency within the reasoning used to support the position",
+      "C": "attempting to show that a premise put forward in support of the position is false",
+      "D": "presenting a purported counterexample to a general claim made by the doctrine\u2019s proponents",
+      "E": "arguing that the application of the doctrine has undesirable consequences"
+    },
+    "correctAnswer": "E"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 18,
+    "questionType": "Flawed Reasoning",
+    "questionDifficulty": 5,
+    "stimulus": "Pharmacist: A large study of people aged 65\u201381 and suffering from insomnia showed that most of insomnia\u2019s symptoms are substantially alleviated by ingesting melatonin, a hormone produced by the pineal gland, which plays a role in the regulation of the body\u2019s biological clock. Thus, the recent claims made by manufacturers of melatonin supplements that the pineal gland produces less melatonin as it ages are evidently correct.",
+    "questionStem": "The pharmacist\u2019s argument is flawed in that it",
+    "answerChoices": {
+      "A": "infers from the effect of an action that the action is intended to produce that effect",
+      "B": "relies on the opinions of individuals who are likely to be biased",
+      "C": "depends on using two different meanings for the same term to draw its conclusion",
+      "D": "confuses an effect of a phenomenon with its cause",
+      "E": "relies on a sample that is unrepresentative"
+    },
+    "correctAnswer": "E"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 19,
+    "questionType": "Parallel Reasoning",
+    "questionDifficulty": 5,
+    "stimulus": "The recent concert was probably not properly promoted. Wells, who is quite knowledgeable about the concert business, was certain that it would sell out unless it was poorly promoted. But the concert did not sell out.",
+    "questionStem": "The pattern of reasoning in which one of the following is most similar to that in the argument above?",
+    "answerChoices": {
+      "A": "Dr. Smith, a well-trained cardiologist, said the patient would probably survive the heart transplant if it were performed by a highly skilled surgeon. Thus, since the patient did not survive the surgery, it probably was not properly performed.",
+      "B": "Professor Willis, who is quite knowledgeable about organic chemistry, said that the sample probably did not contain any organic compounds. So, the sample probably is not labeled correctly, for if it were, it would contain organic compounds.",
+      "C": "My neighbor, who is an experienced home renovator, said the damage to the wall would not be noticeable if it were properly repaired. Thus, the repair to the wall probably was not properly done, since one can still notice the damage.",
+      "D": "The builder said that the school\u2019s roof would not require repairs for years, unless it is damaged in a storm. The roof is already leaking. Thus, since there have been no major storms, the builder was probably wrong.",
+      "E": "Professor Yanakita, who is an expert on the subject, said that the tests would find lead in the soil if they were properly conducted. So, since the tests did find lead in the soil, they probably were properly conducted."
+    },
+    "correctAnswer": "C"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 20,
+    "questionType": "Flawed Reasoning",
+    "questionDifficulty": 5,
+    "stimulus": "Economist: Global recessions can never be prevented, for they could be prevented only if they were predictable. Yet economists, using the best techniques at their disposal, consistently fail to accurately predict global recessions.",
+    "questionStem": "The economist\u2019s argument is most vulnerable to the criticism that it",
+    "answerChoices": {
+      "A": "presupposes in a premise the conclusion that it purports to establish",
+      "B": "fails to establish that economists claim to be able to accurately predict global recessions",
+      "C": "treats the predictability of an event, which is required for the event to be preventable, as a characteristic that assures its prevention",
+      "D": "fails to address the possibility that the techniques available to economists for the prediction of global recessions will significantly improve",
+      "E": "implicitly bases an inference that something will not occur solely on the information that its occurrence is not predictable"
+    },
+    "correctAnswer": "D"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 21,
+    "questionType": "Principle Conform",
+    "questionDifficulty": 5,
+    "stimulus": "Letter to the editor: When your newspaper reported the (admittedly extraordinary) claim by Mr. Hanlon that he saw an alien spaceship, the tone of your article was very skeptical despite the fact that Hanlon has over the years proved to be a trusted member of the community. If Hanlon claimed to have observed a rare natural phenomenon like a large meteor, your article would not have been skeptical. So your newspaper exhibits an unjustified bias.",
+    "questionStem": "The argument in the letter conflicts with which one of the following principles?",
+    "answerChoices": {
+      "A": "If a claim is extraordinary, it should not be presented uncritically unless it is backed by evidence of an extraordinarily high standard.",
+      "B": "One should be skeptical of claims that are based upon testimonial evidence that is acquired only through an intermediary source.",
+      "C": "If a media outlet has trusted a source in the past and the source has a good reputation, the outlet should continue to trust that source.",
+      "D": "People who think they observe supernatural phenomena should not publicize that fact unless they can present corroborating evidence.",
+      "E": "A newspaper should not publish a report unless it is confirmed by an independent source."
+    },
+    "correctAnswer": "A"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 22,
+    "questionType": "Flawed Reasoning",
+    "questionDifficulty": 4,
+    "stimulus": "Fish with teeth specialized for scraping algae occur in both Flower Lake and Blue Lake. Some biologists argue that because such specialized characteristics are rare, fish species that have them should be expected to be closely related. If they are closely related, then the algae-scraping specialization evolved only once. But genetic tests show that the two algae-scraping species, although possibly related, are not closely related. Thus, the algae-scraping specialization evolved more than once.",
+    "questionStem": "The reasoning in the argument is flawed in that it",
+    "answerChoices": {
+      "A": "infers a cause merely from a correlation",
+      "B": "infers that just because the evidence for a particular claim has not yet been confirmed, that claim is false",
+      "C": "takes a sufficient condition as a necessary one",
+      "D": "infers merely because something was likely to occur that it did occur",
+      "E": "appeals to the authority of biologists who may not be representative of all biologists with expertise in the relevant area"
+    },
+    "correctAnswer": "C"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 23,
+    "questionType": "Must Be True",
+    "questionDifficulty": 5,
+    "stimulus": "The constitution of Country F requires that whenever the government sells a state-owned entity, it must sell that entity for the highest price it can command on the open market. The constitution also requires that whenever the government sells a state-owned entity, it must ensure that citizens of Country F will have majority ownership of the resulting company for at least one year after the sale.",
+    "questionStem": "The government of Country F must violate at least one of the constitutional requirements described above if it is faced with which one of the following situations?",
+    "answerChoices": {
+      "A": "The government will sell StateAir, a state-owned airline. The highest bid received was from a corporation that was owned entirely by citizens of Country F when the bid was received. Shortly after the bid was received, however, noncitizens purchased a minority share in the corporation.",
+      "B": "The government has agreed to sell National Silver, a state-owned mine, to a corporation. Although citizens of Country F have majority ownership of the corporation, most of the corporation\u2019s operations and sales take place in other countries.",
+      "C": "The government will sell PetroNat, a state-owned oil company. World Oil Company has made one of the highest offers for PetroNat, but World Oil\u2019s ownership structure is so complex that the government cannot determine whether citizens of Country F have majority ownership.",
+      "D": "The government will sell National Telephone, a state-owned utility. The highest bid received was from a company in which citizens of Country F have majority ownership but noncitizens own a minority share. However, the second-highest bid, from a consortium of investors all of whom are citizens of Country F, was almost as high as the highest bid.",
+      "E": "The government will sell StateRail, a state-owned railway. The government must place significant restrictions on who can purchase StateRail to ensure that citizens of Country F will gain majority ownership. However, any such restrictions will reduce the price the government receives for StateRail."
+    },
+    "correctAnswer": "E"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 24,
+    "questionType": "Weaken",
+    "questionDifficulty": 4,
+    "stimulus": "The makers of Activite, a natural dietary supplement, claim that it promotes energy and mental alertness. To back up their claim, they offer a month\u2019s supply of Activite free to new customers. Clearly, Activite must be effective, since otherwise it would not be in the company\u2019s interest to make such an offer.",
+    "questionStem": "Which one of the following, if true, most weakens the argument?",
+    "answerChoices": {
+      "A": "The nutrients in Activite can all be obtained from a sufficiently varied and well-balanced diet.",
+      "B": "There are less expensive dietary supplements on the market that are just as effective as Activite.",
+      "C": "A month is not a sufficient length of time for most dietary supplements to be fully effective.",
+      "D": "The makers of Activite charge a handling fee that is considerably more than what it costs them to pack and ship their product.",
+      "E": "The mere fact that a dietary supplement contains only natural ingredients does not insure that it has no harmful side effects."
+    },
+    "correctAnswer": "D"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 25,
+    "questionType": "Flawed Parallel Reasoning",
+    "questionDifficulty": 4,
+    "stimulus": "Of the citizens who disapprove of the prime minister\u2019s overall job performance, most disapprove because of the prime minister\u2019s support for increasing the income tax. However, Theresa believes that the income tax should be increased. So Theresa probably approves of the prime minister\u2019s overall job performance.",
+    "questionStem": "Which one of the following arguments exhibits flawed reasoning that is most parallel to that in the argument above?",
+    "answerChoices": {
+      "A": "Of the people who support allowing limited logging in the Grizzly National Forest, most support it because they think it will reduce the risk of fire in the forest. Andy thinks that limited logging will not reduce the risk of fire in the forest, so he probably opposes allowing limited logging there.",
+      "B": "Of the people who expect the population in the area to increase over the next ten years, most think that an expected population increase is a good reason to build a new school. Bonita does not expect the population to increase over the next ten years, so she probably does not favor building a new school.",
+      "C": "Of the people who believe that the overall economy has improved, most believe it because they believe that their own financial situation has improved. Chung believes that the economy has worsened, so he probably believes that his own financial situation has worsened.",
+      "D": "Of the people who oppose funding a study to determine the feasibility of building a light rail line in the Loffoch Valley, most also believe that the Valley Freeway should be built. Donna opposes increasing funding for a study, so she probably supports building the Valley Freeway.",
+      "E": "Of the people who believe that there will be a blizzard tomorrow, most believe it because of the weather report on the Channel 9 news. Eduardo believes that there will be a blizzard tomorrow, so he probably saw the weather report on the Channel 9 news."
+    },
+    "correctAnswer": "A"
+  },
+  {
+    "practiceTest": "PT142",
+    "sectionNumber": 4,
+    "questionNumber": 26,
+    "questionType": "Strengthen",
+    "questionDifficulty": 3,
+    "stimulus": "Bird watcher: The decrease in the mourning-dove population in this area is probably a result of the loss of nesting habitat. Many mourning doves had formerly nested in the nearby orchards, but after overhead sprinklers were installed in the orchards last year, the doves ceased building nests there.",
+    "questionStem": "Which one of the following, if true, most strengthens the argument?",
+    "answerChoices": {
+      "A": "Mourning doves were recently designated a migratory game species, meaning that they can be legally hunted.",
+      "B": "The trees in the nearby orchards were the only type of trees in the area attractive to nesting mourning doves.",
+      "C": "Blue jays that had nested in the orchards also ceased doing so after the sprinklers were installed.",
+      "D": "Many residents of the area fill their bird feeders with canola or wheat, which are appropriate seeds for attracting mourning doves.",
+      "E": "Mourning doves often nest in fruit trees."
+    },
+    "correctAnswer": "B"
+  }
+]

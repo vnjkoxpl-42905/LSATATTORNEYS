@@ -155,6 +155,68 @@ const JSON_FILES = [
   '/data/PT138-S2-LR.json',
   '/data/PT139-S1-LR.json',
   '/data/PT139-S4-LR.json',
+  // Twenty-third batch - PT140
+  '/data/PT140-S1-LR.json',
+  '/data/PT140-S2-LR.json',
+  '/data/PT140-S3-LR.json',
+  // Twenty-fourth batch - PT141
+  '/data/PT141-S2-LR.json',
+  '/data/PT141-S4-LR.json',
+  // Twenty-fifth batch - PT142
+  '/data/PT142-S2-LR.json',
+  '/data/PT142-S4-LR.json',
+  // Twenty-sixth batch - PT143
+  '/data/PT143-S1-LR.json',
+  '/data/PT143-S3-LR.json',
+  '/data/PT143-S4-LR.json',
+  // Twenty-seventh batch - PT144
+  '/data/PT144-S2-LR.json',
+  '/data/PT144-S4-LR.json',
+  // Twenty-eighth batch - PT145
+  '/data/PT145-S2-LR.json',
+  '/data/PT145-S4-LR.json',
+  // Twenty-ninth batch - PT146
+  '/data/PT146-S1-LR.json',
+  '/data/PT146-S2-LR.json',
+  '/data/PT146-S3-LR.json',
+  // Thirtieth batch - PT147
+  '/data/PT147-S1-LR.json',
+  '/data/PT147-S4-LR.json',
+  // Thirty-first batch - PT148
+  '/data/PT148-S1-LR.json',
+  '/data/PT148-S3-LR.json',
+  '/data/PT148-S4-LR.json',
+  // Thirty-second batch - PT149
+  '/data/PT149-S1-LR.json',
+  '/data/PT149-S3-LR.json',
+  '/data/PT149-S4-LR.json',
+  // Thirty-third batch - PT151
+  '/data/PT151-S2-LR.json',
+  '/data/PT151-S3-LR.json',
+  '/data/PT151-S4-LR.json',
+  // Thirty-fourth batch - PT153
+  '/data/PT153-S2-LR.json',
+  '/data/PT153-S3-LR.json',
+  // Thirty-fifth batch - PT154
+  '/data/PT154-S1-LR.json',
+  '/data/PT154-S2-LR.json',
+  '/data/PT154-S4-LR.json',
+  // Thirty-sixth batch - PT155
+  '/data/PT155-S1-LR.json',
+  '/data/PT155-S2-LR.json',
+  '/data/PT155-S4-LR.json',
+  // Thirty-seventh batch - PT156
+  '/data/PT156-S2-LR.json',
+  '/data/PT156-S4-LR.json',
+  // Thirty-eighth batch - PT157
+  '/data/PT157-S2-LR.json',
+  '/data/PT157-S3-LR.json',
+  // Thirty-ninth batch - PT158
+  '/data/PT158-S2-LR.json',
+  '/data/PT158-S3-LR.json',
+  // Fortieth batch - PT159
+  '/data/PT159-S1-LR.json',
+  '/data/PT159-S3-LR.json',
 ];
 
 // Simple hash for qid generation
@@ -216,7 +278,9 @@ const TYPE_SYNONYMS: Record<string, string> = {
   // Flaw variants
   'Flaw': 'Flaw',
   'Flaw in Reasoning': 'Flaw',
+  'Flawed Reasoning': 'Flaw',
   'Error in Reasoning': 'Flaw',
+  'Misinterpretation': 'Flaw',
   
   // Assumption variants
   'Necessary Assumption': 'Necessary Assumption',
@@ -232,20 +296,27 @@ const TYPE_SYNONYMS: Record<string, string> = {
   'Principle-Strengthen': 'Principle-Strengthen',
   'Principle: Strengthen': 'Principle-Strengthen',
   'Principle: Justify': 'Principle-Strengthen',
+  'Principle Justify': 'Principle-Strengthen',
   'Principle-Conform': 'Principle-Conform',
   'Principle: Conform': 'Principle-Conform',
   'Principle: Underlying': 'Principle-Conform',
+  'Principle Application': 'Principle-Conform',
+  'Principle Conform': 'Principle-Conform',
   'Principle': 'Principle-Conform',
   
   // Evaluation
   'Evaluate': 'Evaluate',
   'Evaluate the Argument': 'Evaluate',
+  'Argument Evaluation': 'Evaluate',
   
   // Inference variants
   'Most Strongly Supported': 'Most Strongly Supported',
   'Most Supported': 'Most Strongly Supported',
+  'Complete the Argument': 'Most Strongly Supported',
   'Main Point': 'Main Conclusion',
   'Main Conclusion': 'Main Conclusion',
+  'Identify The Conclusion': 'Main Conclusion',
+  'Identify the Conclusion': 'Main Conclusion',
   'Must Be True': 'Must Be True',
   'Must be True': 'Must Be True',
   'Must Be False': 'Must Be False',
@@ -255,17 +326,20 @@ const TYPE_SYNONYMS: Record<string, string> = {
   'Point at Issue': 'Agree/Disagree',
   'Point of Agreement': 'Agree/Disagree',
   'Disagree': 'Agree/Disagree',
+  'Agreement': 'Agree/Disagree',
   
   // Method and Role
   'Method of Reasoning': 'Method of Reasoning',
   'Method': 'Method of Reasoning',
   'Role': 'Role',
   'Role in the Argument': 'Role',
+  'Role in Argument': 'Role',
   
   // Parallel
   'Parallel Reasoning': 'Parallel Reasoning',
   'Parallel': 'Parallel Reasoning',
   'Parallel Flaw': 'Parallel Flaw',
+  'Flawed Parallel Reasoning': 'Parallel Flaw',
   
   // Paradox
   'Paradox': 'Paradox',
@@ -419,7 +493,7 @@ export class QuestionBank {
         let count = 0;
 
         for (const item of raw) {
-          const qnum = item.questionNumber || 0;
+          const qnum = item.questionNumber || item.qnum || 0;
           const qid = hashQid(pt, section, qnum);
 
           // Validate
@@ -428,8 +502,8 @@ export class QuestionBank {
             continue;
           }
 
-          const difficulty = item.questionDifficulty || item.Question_Difficulty || 3;
-          const qtype = normalizeQType(item.questionType || '', item.questionStem);
+          const difficulty = item.questionDifficulty || item.Question_Difficulty || item.difficulty || 3;
+          const qtype = normalizeQType(item.questionType || item.qtype || '', item.questionStem);
 
           this.questions.set(qid, {
             qid,
