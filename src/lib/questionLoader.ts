@@ -350,29 +350,43 @@ const TYPE_SYNONYMS: Record<string, string> = {
 // Infer question type from question stem using regex patterns
 function inferTypeFromStem(stem: string): string {
   const lower = stem.toLowerCase();
-  
-  // Paradox patterns
-  if (lower.includes('explain') && (lower.includes('discrepancy') || lower.includes('paradox') || 
-      lower.includes('apparent conflict') || lower.includes('seemingly contradictory'))) {
+
+  // Paradox patterns — check before Strengthen since "resolve" could overlap
+  if ((lower.includes('resolve') || lower.includes('explain')) &&
+      (lower.includes('discrepancy') || lower.includes('paradox') ||
+       lower.includes('apparent conflict') || lower.includes('seemingly contradictory'))) {
     return 'Paradox';
   }
-  
+
   // Weaken patterns
   if (lower.includes('weaken') || lower.includes('undermines') || lower.includes('casts doubt') ||
       lower.includes('calls into question')) {
     return 'Weaken';
   }
-  
-  // Strengthen patterns
-  if (lower.includes('strengthen') || lower.includes('supports') || lower.includes('justifies')) {
-    return 'Strengthen';
-  }
-  
-  // Flaw patterns
-  if (lower.includes('flaw') || lower.includes('error') || lower.includes('vulnerable to criticism')) {
+
+  // Flaw patterns — check before Strengthen so "vulnerable to criticism" doesn't match "supports"
+  if (lower.includes('flaw') || lower.includes('error in reasoning') || lower.includes('vulnerable to criticism')) {
     return 'Flaw';
   }
-  
+
+  // Parallel Flaw — must come before Parallel Reasoning and Flaw-adjacent checks
+  if (lower.includes('parallel') && lower.includes('flaw')) {
+    return 'Parallel Flaw';
+  }
+
+  // Parallel Reasoning
+  if (lower.includes('parallel') || lower.includes('most similar') || lower.includes('same pattern')) {
+    return 'Parallel Reasoning';
+  }
+
+  // Principle patterns — check before Strengthen so "justify" in principle context isn't misclassified
+  if (lower.includes('principle') && (lower.includes('justify') || lower.includes('support'))) {
+    return 'Principle-Strengthen';
+  }
+  if (lower.includes('principle') && (lower.includes('conform') || lower.includes('illustrate'))) {
+    return 'Principle-Conform';
+  }
+
   // Assumption patterns
   if (lower.includes('assumption') && (lower.includes('requires') || lower.includes('depends'))) {
     return 'Necessary Assumption';
@@ -380,56 +394,45 @@ function inferTypeFromStem(stem: string): string {
   if (lower.includes('assumption') && lower.includes('if assumed')) {
     return 'Sufficient Assumption';
   }
-  
-  // Must Be True / Most Supported
+
+  // Must Be True / Most Supported — check before Strengthen so "supports" doesn't steal these
   if (lower.includes('must be true') || lower.includes('properly inferred')) {
     return 'Must Be True';
   }
-  if (lower.includes('most (strongly )?supported') || lower.includes('most justifies')) {
+  if (/most (strongly )?supported/.test(lower) || lower.includes('most justifies')) {
     return 'Most Strongly Supported';
   }
-  
-  // Main Conclusion
-  if (lower.includes('main (point|conclusion)') || lower.includes('expresses the (main )?conclusion')) {
+
+  // Main Conclusion — use regex for alternation
+  if (/main (point|conclusion)/.test(lower) || /expresses the (main )?conclusion/.test(lower)) {
     return 'Main Conclusion';
   }
-  
+
+  // Strengthen patterns — now safe after more-specific checks
+  if (lower.includes('strengthen') || lower.includes('supports') || lower.includes('justifies')) {
+    return 'Strengthen';
+  }
+
   // Method of Reasoning
   if (lower.includes('proceeds by') || lower.includes('method') || lower.includes('technique of argumentation')) {
     return 'Method of Reasoning';
   }
-  
+
   // Role
-  if (lower.includes('role') || lower.includes('claim.*figures')) {
+  if (lower.includes('role') || /claim.*figures/.test(lower)) {
     return 'Role';
   }
-  
-  // Parallel
-  if (lower.includes('parallel') && lower.includes('flaw')) {
-    return 'Parallel Flaw';
-  }
-  if (lower.includes('parallel') || lower.includes('most similar') || lower.includes('same pattern')) {
-    return 'Parallel Reasoning';
-  }
-  
-  // Principle
-  if (lower.includes('principle') && (lower.includes('justify') || lower.includes('support'))) {
-    return 'Principle-Strengthen';
-  }
-  if (lower.includes('principle') && (lower.includes('conform') || lower.includes('illustrate'))) {
-    return 'Principle-Conform';
-  }
-  
+
   // Agree/Disagree
-  if (lower.includes('disagree') || lower.includes('point.*issue') || lower.includes('dispute')) {
+  if (lower.includes('disagree') || /point.*issue/.test(lower) || lower.includes('dispute')) {
     return 'Agree/Disagree';
   }
-  
+
   // Evaluate
   if (lower.includes('evaluate') || lower.includes('useful to know')) {
     return 'Evaluate';
   }
-  
+
   return 'Unknown';
 }
 
@@ -469,8 +472,11 @@ function normalizeQType(raw: string, questionStem?: string): string {
   return 'Unknown';
 }
 
+const VALID_ANSWERS = new Set(['A', 'B', 'C', 'D', 'E']);
+
 export class QuestionBank {
   private questions: Map<string, LRQuestion> = new Map();
+  private loaded = false;
   private manifest: QuestionManifest = {
     totalQuestions: 0,
     byPT: {},
@@ -480,12 +486,24 @@ export class QuestionBank {
   };
 
   async load(): Promise<void> {
-    for (const filename of JSON_FILES) {
-      try {
+    if (this.loaded) return;
+    this.loaded = true;
+
+    // Fetch all files in parallel
+    const results = await Promise.allSettled(
+      JSON_FILES.map(async (filename) => {
         const response = await fetch(filename);
-        if (!response.ok) continue;
-        
+        if (!response.ok) return null;
         const raw = await response.json();
+        return { filename, raw };
+      })
+    );
+
+    for (const result of results) {
+      if (result.status !== 'fulfilled' || !result.value) continue;
+      const { filename, raw } = result.value;
+
+      try {
         if (!Array.isArray(raw)) continue;
 
         const pt = parseInt(filename.match(/PT(\d+)/)?.[1] || '0');
@@ -496,13 +514,26 @@ export class QuestionBank {
           const qnum = item.questionNumber || item.qnum || 0;
           const qid = hashQid(pt, section, qnum);
 
-          // Validate
+          // Validate required fields
           if (!item.answerChoices || !item.correctAnswer || !item.questionStem) {
-            console.warn(`Invalid question: ${qid}`);
+            console.warn(`Invalid question (missing fields): ${qid}`);
             continue;
           }
 
-          const difficulty = item.questionDifficulty || item.Question_Difficulty || item.difficulty || 3;
+          // Validate correctAnswer
+          const answer = item.correctAnswer.toUpperCase();
+          if (!VALID_ANSWERS.has(answer)) {
+            console.warn(`Invalid correctAnswer "${item.correctAnswer}" in ${qid}`);
+            continue;
+          }
+
+          // Warn on qid collision
+          if (this.questions.has(qid)) {
+            console.warn(`Duplicate qid collision: ${qid} (from ${filename}) overwrites existing`);
+          }
+
+          const rawDifficulty = item.questionDifficulty ?? item.Question_Difficulty ?? item.difficulty ?? 3;
+          const difficulty = Math.max(1, Math.min(5, rawDifficulty));
           const qtype = normalizeQType(item.questionType || item.qtype || '', item.questionStem);
 
           this.questions.set(qid, {
@@ -516,7 +547,7 @@ export class QuestionBank {
             stimulus: item.stimulus,
             questionStem: item.questionStem,
             answerChoices: item.answerChoices,
-            correctAnswer: item.correctAnswer,
+            correctAnswer: answer as LRQuestion['correctAnswer'],
             breakdown: item.breakdown,
             answerChoiceExplanations: item.answerChoiceExplanations,
           });
@@ -533,13 +564,13 @@ export class QuestionBank {
           });
         }
       } catch (err) {
-        console.error(`Failed to load ${filename}:`, err);
+        console.error(`Failed to parse ${filename}:`, err);
       }
     }
 
     // Build manifest
     this.manifest.totalQuestions = this.questions.size;
-    
+
     for (const q of this.questions.values()) {
       this.manifest.byPT[`PT${q.pt}`] = (this.manifest.byPT[`PT${q.pt}`] || 0) + 1;
       this.manifest.byQType[q.qtype] = (this.manifest.byQType[q.qtype] || 0) + 1;
@@ -555,12 +586,12 @@ export class QuestionBank {
       unknownCount,
       types: Object.keys(this.manifest.byQType).sort()
     });
-    
+
     if (unknownCount > 0) {
       const unknownQuestions = Array.from(this.questions.values())
         .filter(q => q.qtype === 'Unknown')
         .slice(0, 5);
-      console.warn(`Found ${unknownCount} questions with unknown types. Sample:`, 
+      console.warn(`Found ${unknownCount} questions with unknown types. Sample:`,
         unknownQuestions.map(q => ({ qid: q.qid, stem: q.questionStem.substring(0, 80) })));
     }
   }
