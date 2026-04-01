@@ -546,7 +546,7 @@ const BootcampsTab: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <IL>Featured Bootcamp</IL>
+        <IL>Available Bootcamps</IL>
         <p className="text-xs text-muted-foreground mt-1">Focused skill drills built into your classroom.</p>
       </div>
 
@@ -572,6 +572,37 @@ const BootcampsTab: React.FC = () => {
           <div className="mt-4">
             <button
               onClick={() => navigate('/bootcamp/causation-station')}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background text-sm font-medium px-4 py-2 hover:bg-foreground/90 transition-colors duration-150"
+            >
+              Launch Bootcamp
+              <span className="ml-1">→</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Conclusion & Role Card */}
+      <div className="rounded-xl bg-card border border-border shadow-sm p-6 flex flex-col sm:flex-row gap-6 items-start">
+        <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+          <span className="text-xl">📐</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Main Conclusion &amp; Role</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-xl leading-relaxed">
+                Master two of the most common LSAT LR question types — identifying the main conclusion of an argument and analyzing how individual claims function within it.
+              </p>
+              <div className="flex items-center gap-4 mt-3">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">6 Modules</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Argument Anatomy</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Interactive Drills</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={() => navigate('/bootcamp/main-conclusion-role')}
               className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background text-sm font-medium px-4 py-2 hover:bg-foreground/90 transition-colors duration-150"
             >
               Launch Bootcamp
