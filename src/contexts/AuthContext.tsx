@@ -25,6 +25,8 @@ interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  onboardingCompleted: boolean;
+  markOnboardingComplete: () => void;
   signUp: (email: string, password: string, username: string, displayName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
@@ -39,9 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   useEffect(() => {
-    // Ensure a students row exists for this auth user so class_id is always resolvable
+    // Ensure a students row exists for this auth user so class_id is always resolvable.
+    // Also reads back onboarding_completed to drive the onboarding gate.
     const provisionStudentRecord = async (userId: string) => {
       const { data: existing } = await supabase
         .from('students')
@@ -57,6 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           token_hash: userId,
         });
       }
+
+      // Onboarding completion is stored in auth user_metadata (no migration required)
+      const { data: { user: freshUser } } = await supabase.auth.getUser();
+      setOnboardingCompleted(!!(freshUser?.user_metadata?.onboarding_completed));
     };
 
     // Set up auth state listener FIRST
@@ -177,8 +185,10 @@ const updatePassword = async (newPassword: string) => {
   }
 };
 
+  const markOnboardingComplete = () => setOnboardingCompleted(true);
+
 return (
-  <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signOut, resetPassword, updatePassword }}>
+  <AuthContext.Provider value={{ user, session, loading, onboardingCompleted, markOnboardingComplete, signUp, signIn, signInWithGoogle, signOut, resetPassword, updatePassword }}>
     {children}
   </AuthContext.Provider>
 );
