@@ -5,7 +5,7 @@ import {
   startOfWeek, endOfWeek, eachDayOfInterval, addWeeks,
   subWeeks, addDays, subDays, addMonths, subMonths,
 } from 'date-fns';
-import { ArrowLeft, CalendarDays, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Trash2, Plus, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import type { DayContentProps } from 'react-day-picker';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -485,6 +485,21 @@ export default function Schedule() {
 
               {/* ── Upcoming sidebar ── */}
               <div className="space-y-4">
+
+                {/* Book a Session card */}
+                <a
+                  href="https://cal.com/joshua-jtx5ud/session-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-3 p-4 rounded-xl bg-foreground text-background hover:bg-foreground/90 transition-colors group"
+                >
+                  <div>
+                    <p className="text-sm font-semibold">Book a Session</p>
+                    <p className="text-[11px] opacity-60 mt-0.5">Schedule 1-on-1 coaching with Joshua</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 opacity-50 group-hover:opacity-100 shrink-0 transition-opacity" />
+                </a>
+
                 <div className="flex items-center gap-2">
                   <CalendarDays className="w-4 h-4 text-muted-foreground" />
                   <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-muted-foreground">
